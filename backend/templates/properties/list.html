@@ -1,0 +1,213 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Properties — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <!-- ── FILTER SIDEBAR ── -->
+    <div class="col-lg-3 mb-4">
+      <div class="filter-sidebar">
+        <h5 class="filter-title"><i class="bi bi-funnel-fill"></i>Filter Properties</h5>
+
+        <form method="GET" action="" id="filterForm">
+          <!-- Search -->
+          <div class="filter-group">
+            <div class="filter-label">Search</div>
+            <div class="input-group">
+              <span class="input-group-text" style="background:rgba(255,255,255,.05);border-color:var(--border);color:var(--text-muted)"><i class="bi bi-search"></i></span>
+              <input type="text" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Title, area, keyword..." />
+            </div>
+          </div>
+
+          <!-- Listing Type -->
+          <div class="filter-group">
+            <div class="filter-label">Listing Type</div>
+            <select name="listing_type" class="form-select">
+              <option value="">All</option>
+              <option value="sale" {% if request.GET.listing_type == "sale" %}selected{% endif %}>For Sale</option>
+              <option value="rent" {% if request.GET.listing_type == "rent" %}selected{% endif %}>For Rent</option>
+              <option value="shortlet" {% if request.GET.listing_type == "shortlet" %}selected{% endif %}>Short Let</option>
+            </select>
+          </div>
+
+          <!-- Property Type -->
+          <div class="filter-group">
+            <div class="filter-label">Property Type</div>
+            <select name="property_type" class="form-select">
+              <option value="">All Types</option>
+              <option value="house" {% if request.GET.property_type == "house" %}selected{% endif %}>House</option>
+              <option value="apartment" {% if request.GET.property_type == "apartment" %}selected{% endif %}>Apartment</option>
+              <option value="villa" {% if request.GET.property_type == "villa" %}selected{% endif %}>Villa</option>
+              <option value="duplex" {% if request.GET.property_type == "duplex" %}selected{% endif %}>Duplex</option>
+              <option value="bungalow" {% if request.GET.property_type == "bungalow" %}selected{% endif %}>Bungalow</option>
+              <option value="land" {% if request.GET.property_type == "land" %}selected{% endif %}>Land</option>
+              <option value="commercial" {% if request.GET.property_type == "commercial" %}selected{% endif %}>Commercial</option>
+            </select>
+          </div>
+
+          <!-- Location -->
+          <div class="filter-group">
+            <div class="filter-label">State</div>
+            <select name="state" class="form-select">
+              <option value="">All States</option>
+              {% for s in states %}<option value="{{ s }}" {% if request.GET.state == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">City</div>
+            <input type="text" name="city" value="{{ request.GET.city }}" class="form-control" placeholder="Enter city..." />
+          </div>
+
+          <!-- Price Range -->
+          <div class="filter-group">
+            <div class="filter-label">Price Range</div>
+            <div class="price-range-display">
+              <span id="priceMinDisplay">₦0</span>
+              <span id="priceMaxDisplay">₦500M</span>
+            </div>
+            <input type="range" id="priceMin" name="price_min" min="0" max="500000000" step="1000000" value="{{ request.GET.price_min|default:0 }}" class="mb-2" />
+            <input type="range" id="priceMax" name="price_max" min="0" max="500000000" step="1000000" value="{{ request.GET.price_max|default:500000000 }}" />
+          </div>
+
+          <!-- Bedrooms -->
+          <div class="filter-group">
+            <div class="filter-label">Min Bedrooms</div>
+            <div class="d-flex gap-2">
+              {% for n in "12345"|make_list %}
+              <label class="bed-btn">
+                <input type="radio" name="bedrooms_min" value="{{ n }}" {% if request.GET.bedrooms_min == n %}checked{% endif %} hidden />
+                <span class="btn btn-outline-secondary btn-sm px-3">{{ n }}+</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="filter-group">
+            <div class="filter-label">Status</div>
+            <select name="status" class="form-select">
+              <option value="">All Status</option>
+              <option value="available" {% if request.GET.status == "available" %}selected{% endif %}>Available</option>
+              <option value="sold" {% if request.GET.status == "sold" %}selected{% endif %}>Sold</option>
+              <option value="rented" {% if request.GET.status == "rented" %}selected{% endif %}>Rented</option>
+            </select>
+          </div>
+
+          <!-- Featured -->
+          <div class="filter-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="is_featured" id="featuredCheck" value="true" {% if request.GET.is_featured %}checked{% endif %} />
+              <label class="form-check-label text-muted small" for="featuredCheck">Featured only</label>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-gold"><i class="bi bi-funnel me-2"></i>Apply Filters</button>
+            <a href="{% url 'property-list' %}" class="btn btn-outline-secondary btn-sm">Clear All</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── PROPERTY GRID ── -->
+    <div class="col-lg-9">
+      <!-- Results Header -->
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+          <h4 class="font-heading mb-0">
+            <span class="text-gold">{{ total_count }}</span> Properties Found
+          </h4>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+          <input type="text" id="quickSearch" class="form-control form-control-sm" placeholder="Quick search..." style="width:180px" />
+          <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-secondary" id="gridView" title="Grid view"><i class="bi bi-grid"></i></button>
+            <button class="btn btn-sm btn-outline-secondary" id="listView" title="List view"><i class="bi bi-list-ul"></i></button>
+          </div>
+          <select class="form-select form-select-sm" style="width:150px" onchange="addSort(this.value)">
+            <option value="">Sort by</option>
+            <option value="-created_at">Newest First</option>
+            <option value="price">Price: Low to High</option>
+            <option value="-price">Price: High to Low</option>
+            <option value="-view_count">Most Viewed</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      {% if properties %}
+      <div class="row g-4" id="propertyGrid">
+        {% for prop in properties %}
+        <div class="col-lg-4 col-md-6">
+          {% include "properties/_card.html" with property=prop %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if properties.has_other_pages %}
+      <nav class="mt-5 d-flex justify-content-center">
+        <ul class="pagination">
+          {% if properties.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ properties.previous_page_number }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          {% for i in properties.paginator.page_range %}
+          <li class="page-item {% if i == properties.number %}active{% endif %}">
+            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ i }}">{{ i }}</a>
+          </li>
+          {% endfor %}
+          {% if properties.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ properties.next_page_number }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-buildings" style="font-size:4rem;opacity:.25;color:var(--gold)"></i>
+        <h4 class="font-heading mt-3">No Properties Found</h4>
+        <p class="text-muted">Try adjusting your filters or <a href="{% url 'property-list' %}" class="text-gold">browse all listings</a>.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>
+  .page-link { background:var(--card-bg);border-color:var(--border);color:var(--text-muted);border-radius:8px!important;margin:0 3px; }
+  .page-item.active .page-link { background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-color:var(--gold);color:var(--navy); }
+  .page-link:hover { background:rgba(201,168,76,.1);color:var(--gold);border-color:var(--gold); }
+  .bed-btn input:checked + span { background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);border-color:var(--gold); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addSort(val) {
+  const url = new URL(window.location);
+  if (val) url.searchParams.set('ordering', val); else url.searchParams.delete('ordering');
+  window.location = url;
+}
+
+// Grid / List toggle
+document.getElementById('gridView')?.addEventListener('click', () => {
+  document.querySelectorAll('#propertyGrid .col-lg-4').forEach(c => { c.className = 'col-lg-4 col-md-6'; });
+});
+document.getElementById('listView')?.addEventListener('click', () => {
+  document.querySelectorAll('#propertyGrid > div').forEach(c => { c.className = 'col-12'; });
+});
+</script>
+{% endblock %}
+{% endblock %}

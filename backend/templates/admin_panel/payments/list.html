@@ -1,0 +1,111 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Payment Transactions — Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:1400px; padding-top:90px !important;">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-2">
+      <div class="dashboard-sidebar" style="position:sticky;top:90px;">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <p class="mb-0 fw-600 small">{{ user.first_name }}</p>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'admin_panel:property-list' %}" class="sidebar-link"><i class="bi bi-buildings"></i>Properties</a>
+          <a href="{% url 'admin_panel:property-create' %}" class="sidebar-link"><i class="bi bi-plus-circle"></i>Add Property</a>
+          <a href="{% url 'admin_panel:user-list' %}" class="sidebar-link"><i class="bi bi-people"></i>Users</a>
+          <a href="{% url 'admin_panel:negotiation-list' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'admin_panel:payment-list' %}" class="sidebar-link active"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'admin_panel:content' %}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i>Content</a>
+          <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+          <a href="{% url 'home' %}" class="sidebar-link"><i class="bi bi-house"></i>View Site</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <h3 class="font-heading mb-0"><i class="bi bi-wallet2 text-gold me-2"></i>Payment Transactions</h3>
+      </div>
+
+      <!-- Total Revenue Banner -->
+      {% if total_revenue %}
+      <div class="glass-card p-4 mb-4" style="border-left:4px solid var(--gold);">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <div class="small text-muted mb-1">Total Revenue</div>
+            <div class="text-gold fw-bold" style="font-size:2rem;">₦{{ total_revenue|floatformat:0|intcomma }}</div>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <i class="bi bi-cash-stack text-gold" style="font-size:3rem;opacity:.3;"></i>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Status Filter -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'admin_panel:payment-list' %}" class="btn btn-sm {% if not status_filter %}btn-gold{% else %}btn-gold-outline{% endif %}">All</a>
+        <a href="?status=success" class="btn btn-sm {% if status_filter == 'success' %}btn-gold{% else %}btn-gold-outline{% endif %}">Success</a>
+        <a href="?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-gold{% else %}btn-gold-outline{% endif %}">Pending</a>
+        <a href="?status=failed" class="btn btn-sm {% if status_filter == 'failed' %}btn-gold{% else %}btn-gold-outline{% endif %}">Failed</a>
+        <a href="?status=refunded" class="btn btn-sm {% if status_filter == 'refunded' %}btn-gold{% else %}btn-gold-outline{% endif %}">Refunded</a>
+      </div>
+
+      {% if payments %}
+      <div class="table-wrapper">
+        <table class="zb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Client</th>
+              <th>Property</th>
+              <th>Amount</th>
+              <th>Reference</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pmt in payments %}
+            <tr>
+              <td class="text-muted small">{{ forloop.counter }}</td>
+              <td class="text-muted small">{{ pmt.user.email }}</td>
+              <td class="fw-600">{{ pmt.property.title|truncatechars:28 }}</td>
+              <td class="text-gold fw-600">₦{{ pmt.amount|floatformat:0|intcomma }}</td>
+              <td>
+                <code style="font-size:.75rem;color:var(--text-muted);">{{ pmt.reference|truncatechars:20 }}</code>
+              </td>
+              <td>
+                <span class="status-pill status-{{ pmt.status }}">{{ pmt.status|capfirst }}</span>
+              </td>
+              <td class="text-muted small">{{ pmt.created_at|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="glass-card p-5 text-center">
+        <i class="bi bi-wallet2" style="font-size:4rem;opacity:.3;"></i>
+        <h5 class="mt-3 text-muted">
+          {% if status_filter %}No {{ status_filter }} payments found{% else %}No Payments Found{% endif %}
+        </h5>
+        {% if status_filter %}
+        <a href="{% url 'admin_panel:payment-list' %}" class="btn btn-gold-outline mt-3">View All</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

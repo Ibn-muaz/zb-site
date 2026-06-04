@@ -1,0 +1,141 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Admin: Negotiation Details — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:1400px">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-lg-2">
+      <div class="dashboard-sidebar" style="position:sticky;top:90px">
+        <!-- Re-use admin sidebar nav (simplified for partial) -->
+        <nav class="sidebar-links mt-3">
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'admin_panel:property-list' %}" class="sidebar-link"><i class="bi bi-buildings"></i>Properties</a>
+          <a href="{% url 'admin_panel:negotiation-list' %}" class="sidebar-link active"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'admin_panel:payment-list' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link text-muted"><i class="bi bi-arrow-left"></i>Back</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h3 class="font-heading mb-1">Negotiation <span class="text-gold">#{{ negotiation.id|stringformat:"s"|slice:":8" }}</span></h3>
+          <p class="text-muted mb-0">Manage offer for {{ negotiation.listing.title }}</p>
+        </div>
+        <span class="status-pill status-{{ negotiation.status }} fs-6 px-3 py-2">{{ negotiation.get_status_display }}</span>
+      </div>
+
+      <div class="row g-4">
+        <!-- ── INFO PANEL ── -->
+        <div class="col-lg-4">
+          <div class="glass-card p-4 mb-4">
+            <h5 class="font-heading mb-3"><i class="bi bi-person text-gold me-2"></i>Client Details</h5>
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <img src="{{ negotiation.user.get_avatar_url }}" alt="User" style="width:50px;height:50px;border-radius:50%" />
+              <div>
+                <div class="fw-600">{{ negotiation.user.full_name }}</div>
+                <div class="text-muted small">{{ negotiation.user.email }}</div>
+                <div class="text-muted small">{{ negotiation.user.phone }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-4">
+            <h5 class="font-heading mb-3"><i class="bi bi-cash-coin text-gold me-2"></i>Offer Summary</h5>
+            <ul class="list-unstyled mb-0" style="font-size:.875rem">
+              <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+                <span class="text-muted">Asking Price</span><span class="fw-600">₦{{ negotiation.asking_price|floatformat:0|intcomma }}</span>
+              </li>
+              <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+                <span class="text-muted">Initial Offer</span><span class="fw-600">₦{{ negotiation.initial_offer|floatformat:0|intcomma }}</span>
+              </li>
+              <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+                <span class="text-muted">Current Offer</span><span class="fw-600 text-gold fs-5">₦{{ negotiation.current_offer|floatformat:0|intcomma }}</span>
+              </li>
+              {% if negotiation.counter_offer %}
+              <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+                <span class="text-muted">Our Counter</span><span class="fw-600 text-warning">₦{{ negotiation.counter_offer|floatformat:0|intcomma }}</span>
+              </li>
+              {% endif %}
+              <li class="d-flex justify-content-between py-2 text-info">
+                <span class="text-muted">Discount</span><span class="fw-600">{{ negotiation.get_discount_percentage }}%</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── CHAT & ACTIONS ── -->
+        <div class="col-lg-8">
+          <div class="glass-card h-100 d-flex flex-column" style="overflow:hidden">
+            <div class="p-4" style="border-bottom:1px solid var(--border);background:rgba(201,168,76,.05)">
+              <h5 class="font-heading mb-0"><i class="bi bi-chat-left-dots text-gold me-2"></i>Communication Thread</h5>
+            </div>
+
+            <div class="negotiation-thread" id="chatThread" style="flex:1">
+              {% for msg in messages_list %}
+              <div class="message-bubble {% if msg.is_admin_reply %}user-msg{% else %}admin-msg{% endif %}">
+                {% if not msg.is_admin_reply %}<div class="fw-600 small mb-1" style="color:var(--gold)">{{ msg.sender.full_name }} (Client)</div>{% endif %}
+                <div>{{ msg.message_text|linebreaksbr }}</div>
+                {% if msg.offer_amount %}
+                <div class="mt-2 p-2 rounded" style="background:rgba(0,0,0,.15);border:1px dashed rgba(255,255,255,.3)">
+                  <span class="small fw-600">Offer Amount: </span><span class="text-warning fw-700">₦{{ msg.offer_amount|floatformat:0|intcomma }}</span>
+                </div>
+                {% endif %}
+                <div class="message-meta text-end">{{ msg.timestamp|time:"H:i" }} &bull; {{ msg.timestamp|date:"M d" }}</div>
+              </div>
+              {% endfor %}
+            </div>
+
+            {% if negotiation.status in 'pending,counter_offered' %}
+            <div class="p-4" style="border-top:1px solid var(--border);background:var(--card-bg)">
+              <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Action</label>
+                    <select name="action" id="actionSelect" class="form-select" onchange="toggleCounterInput()">
+                      <option value="message">Send Message Only</option>
+                      <option value="counter">Make Counter Offer</option>
+                      <option value="accept">Accept Offer</option>
+                      <option value="reject">Reject Offer</option>
+                    </select>
+                  </div>
+                  <div class="col-md-8" id="counterDiv" style="display:none">
+                    <label class="form-label text-warning">Counter Offer Amount (₦)</label>
+                    <input type="number" name="counter_offer_amount" class="form-control" placeholder="e.g. 48000000" />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Message to Client</label>
+                  <textarea name="message_text" class="form-control" rows="3" placeholder="Explain your decision or counter offer..."></textarea>
+                </div>
+                <div class="text-end">
+                  <button type="submit" class="btn btn-gold px-4"><i class="bi bi-send me-2"></i>Submit Response</button>
+                </div>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const thread = document.getElementById('chatThread');
+if(thread) thread.scrollTop = thread.scrollHeight;
+
+function toggleCounterInput() {
+  const v = document.getElementById('actionSelect').value;
+  document.getElementById('counterDiv').style.display = (v === 'counter') ? 'block' : 'none';
+}
+</script>
+{% endblock %}
+{% endblock %}

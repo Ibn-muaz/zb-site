@@ -1,0 +1,160 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Analytics — Admin{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:1400px; padding-top:90px !important;">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-2">
+      <div class="dashboard-sidebar" style="position:sticky;top:90px;">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <p class="mb-0 fw-600 small">{{ user.first_name }}</p>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'admin_panel:property-list' %}" class="sidebar-link"><i class="bi bi-buildings"></i>Properties</a>
+          <a href="{% url 'admin_panel:property-create' %}" class="sidebar-link"><i class="bi bi-plus-circle"></i>Add Property</a>
+          <a href="{% url 'admin_panel:user-list' %}" class="sidebar-link"><i class="bi bi-people"></i>Users</a>
+          <a href="{% url 'admin_panel:negotiation-list' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'admin_panel:payment-list' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'admin_panel:content' %}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i>Content</a>
+          <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+          <a href="{% url 'home' %}" class="sidebar-link"><i class="bi bi-house"></i>View Site</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="font-heading mb-0"><i class="bi bi-bar-chart-line text-gold me-2"></i>Analytics</h3>
+        <span class="text-muted small" id="analyticsUpdated"></span>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="row g-4 mb-4">
+        <!-- Monthly Users Chart -->
+        <div class="col-lg-6">
+          <div class="glass-card p-4 h-100">
+            <h5 class="font-heading mb-4"><i class="bi bi-people text-gold me-2"></i>Monthly User Registrations</h5>
+            <canvas id="usersChart" height="260"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly Revenue Chart -->
+        <div class="col-lg-6">
+          <div class="glass-card p-4 h-100">
+            <h5 class="font-heading mb-4"><i class="bi bi-currency-dollar text-gold me-2"></i>Monthly Revenue (₦)</h5>
+            <canvas id="revenueChart" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Properties -->
+      {% if top_properties %}
+      <div class="glass-card p-4">
+        <h5 class="font-heading mb-4"><i class="bi bi-trophy text-gold me-2"></i>Top Performing Properties</h5>
+        <div class="table-responsive">
+          <table class="zb-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Property</th>
+                <th>City</th>
+                <th>Views</th>
+                <th>Inquiries</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for prop in top_properties %}
+              <tr>
+                <td>
+                  {% if forloop.counter == 1 %}<span class="text-gold fw-bold">🥇 1</span>
+                  {% elif forloop.counter == 2 %}<span style="color:#C0C0C0;" class="fw-bold">🥈 2</span>
+                  {% elif forloop.counter == 3 %}<span style="color:#CD7F32;" class="fw-bold">🥉 3</span>
+                  {% else %}<span class="text-muted">{{ forloop.counter }}</span>
+                  {% endif %}
+                </td>
+                <td class="fw-600">{{ prop.title|truncatechars:30 }}</td>
+                <td class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ prop.city|default:"—" }}</td>
+                <td><span class="text-gold">{{ prop.view_count|default:0|intcomma }}</span></td>
+                <td>{{ prop.inquiry_count|default:0|intcomma }}</td>
+                <td><span class="status-pill status-{{ prop.status|default:'available' }}">{{ prop.status|default:"Available"|capfirst }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('analyticsUpdated').textContent = 'Updated: ' + new Date().toLocaleString();
+
+  const chartDefaults = {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#8A96A8', font: { size: 12 } } } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#8A96A8' } },
+      y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#8A96A8' } }
+    }
+  };
+
+  // Monthly Users Chart
+  const usersData = {{ monthly_users|default:"[]"|safe }};
+  const usersCtx = document.getElementById('usersChart').getContext('2d');
+  new Chart(usersCtx, {
+    type: 'bar',
+    data: {
+      labels: usersData.map(d => d.month),
+      datasets: [{
+        label: 'New Users',
+        data: usersData.map(d => d.count),
+        backgroundColor: 'rgba(201,168,76,0.6)',
+        borderColor: 'rgba(201,168,76,1)',
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+
+  // Monthly Revenue Chart
+  const revenueData = {{ monthly_revenue|default:"[]"|safe }};
+  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+  new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+      labels: revenueData.map(d => d.month),
+      datasets: [{
+        label: 'Revenue (₦)',
+        data: revenueData.map(d => d.total),
+        borderColor: 'rgba(201,168,76,1)',
+        backgroundColor: 'rgba(201,168,76,0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgba(201,168,76,1)',
+        pointRadius: 5,
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+</script>
+{% endblock %}

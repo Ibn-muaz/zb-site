@@ -1,0 +1,64 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# ─── Virtual Environments ─────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ─── Django ───────────────────────────────────────────────────────────────────
+*.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+/static/
+
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+.env
+*.env
+!.env.example
+
+# ─── IDE / Editor ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Node (mobile / frontend) ────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ─── Android / Mobile ────────────────────────────────────────────────────────
+mobile/.gradle/
+mobile/build/
+mobile/local.properties
+mobile/*.keystore
+mobile/*.jks
+mobile/.idea/
+mobile/app/release/
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.orig
+.cache/

@@ -1,0 +1,205 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Admin Dashboard — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:1400px">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-2">
+      <div class="dashboard-sidebar" style="position:sticky;top:90px">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <p class="mb-0 fw-600 small">{{ user.first_name }}</p>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link active"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'admin_panel:property-list' %}" class="sidebar-link"><i class="bi bi-buildings"></i>Properties</a>
+          <a href="{% url 'admin_panel:property-create' %}" class="sidebar-link"><i class="bi bi-plus-circle"></i>Add Property</a>
+          <a href="{% url 'admin_panel:user-list' %}" class="sidebar-link"><i class="bi bi-people"></i>Users</a>
+          <a href="{% url 'admin_panel:negotiation-list' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'admin_panel:payment-list' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'admin_panel:content' %}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i>Content</a>
+          <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+          <a href="{% url 'home' %}" class="sidebar-link"><i class="bi bi-house"></i>View Site</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="font-heading mb-0">Admin <span class="text-gold">Dashboard</span></h3>
+        <div class="text-muted small">Last updated: <span id="lastUpdated"></span></div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-gold"><i class="bi bi-buildings-fill"></i></div>
+            <div><div class="stat-value">{{ total_properties }}</div><div class="stat-desc">Total Properties</div></div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-info"><i class="bi bi-people-fill"></i></div>
+            <div><div class="stat-value">{{ total_users }}</div><div class="stat-desc">Registered Users</div></div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-warning"><i class="bi bi-chat-dots-fill"></i></div>
+            <div>
+              <div class="stat-value">{{ total_negotiations }}</div>
+              <div class="stat-desc">Total Negotiations</div>
+              {% if pending_negotiations %}<small class="text-warning">{{ pending_negotiations }} pending</small>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-success"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="stat-value">{{ total_payments }}</div><div class="stat-desc">Completed Payments</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Charts -->
+        <div class="col-lg-7">
+          <div class="glass-card p-4 h-100">
+            <h5 class="font-heading mb-4"><i class="bi bi-pie-chart text-gold me-2"></i>Property Status Overview</h5>
+            <canvas id="statusChart" height="280"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="glass-card p-4 h-100">
+            <h5 class="font-heading mb-3"><i class="bi bi-lightning-fill text-gold me-2"></i>Quick Actions</h5>
+            <div class="d-grid gap-2">
+              <a href="{% url 'admin_panel:property-create' %}" class="btn btn-gold"><i class="bi bi-plus-circle me-2"></i>Add New Property</a>
+              <a href="{% url 'admin_panel:negotiation-list' %}?status=pending" class="btn btn-gold-outline">
+                <i class="bi bi-chat-dots me-2"></i>Review Pending Offers
+                {% if pending_negotiations %}<span class="badge bg-warning ms-2">{{ pending_negotiations }}</span>{% endif %}
+              </a>
+              <a href="{% url 'admin_panel:user-list' %}" class="btn btn-outline-secondary"><i class="bi bi-people me-2"></i>Manage Users</a>
+              <a href="/api/docs/" target="_blank" class="btn btn-outline-secondary"><i class="bi bi-code-slash me-2"></i>API Documentation</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Properties -->
+        <div class="col-lg-7">
+          <div class="table-wrapper">
+            <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom:1px solid var(--border)">
+              <h5 class="font-heading mb-0"><i class="bi bi-buildings text-gold me-2"></i>Recent Properties</h5>
+              <a href="{% url 'admin_panel:property-list' %}" class="btn btn-gold-outline btn-sm">View All</a>
+            </div>
+            <table class="zb-table">
+              <thead><tr><th>Title</th><th>Type</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                {% for prop in recent_properties %}
+                <tr>
+                  <td class="fw-600">{{ prop.title|truncatechars:25 }}</td>
+                  <td class="text-muted">{{ prop.get_property_type_display }}</td>
+                  <td class="text-gold">{{ prop.formatted_price }}</td>
+                  <td><span class="status-pill status-{{ prop.status }}">{{ prop.get_status_display }}</span></td>
+                  <td>
+                    <a href="{% url 'admin_panel:property-edit' prop.slug %}" class="btn btn-gold btn-sm">Edit</a>
+                    <a href="{% url 'property-detail' prop.slug %}" class="btn btn-outline-secondary btn-sm">View</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Negotiations -->
+        <div class="col-lg-5">
+          <div class="table-wrapper">
+            <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom:1px solid var(--border)">
+              <h5 class="font-heading mb-0"><i class="bi bi-chat-dots text-gold me-2"></i>Recent Negotiations</h5>
+              <a href="{% url 'admin_panel:negotiation-list' %}" class="btn btn-gold-outline btn-sm">View All</a>
+            </div>
+            <table class="zb-table">
+              <thead><tr><th>User</th><th>Offer</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                {% for neg in recent_negotiations %}
+                <tr>
+                  <td>{{ neg.user.first_name }} {{ neg.user.last_name|slice:":1" }}.</td>
+                  <td class="text-gold">₦{{ neg.current_offer|floatformat:0|intcomma }}</td>
+                  <td><span class="status-pill status-{{ neg.status }}">{{ neg.get_status_display }}</span></td>
+                  <td><a href="{% url 'admin_panel:negotiation-detail' neg.pk %}" class="btn btn-gold btn-sm">Review</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="col-12">
+          <div class="table-wrapper">
+            <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom:1px solid var(--border)">
+              <h5 class="font-heading mb-0"><i class="bi bi-people text-gold me-2"></i>Recent Users</h5>
+              <a href="{% url 'admin_panel:user-list' %}" class="btn btn-gold-outline btn-sm">View All</a>
+            </div>
+            <table class="zb-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody>
+                {% for u in recent_users %}
+                <tr>
+                  <td class="fw-600">{{ u.full_name }}</td>
+                  <td class="text-muted">{{ u.email }}</td>
+                  <td>{% if u.is_verified %}<span class="text-success"><i class="bi bi-check-circle-fill"></i></span>{% else %}<span class="text-warning"><i class="bi bi-x-circle-fill"></i></span>{% endif %}</td>
+                  <td class="text-muted small">{{ u.date_joined|date:"M d, Y" }}</td>
+                  <td>
+                    <button class="btn suspend-btn btn-sm {% if u.is_suspended %}btn-success{% else %}btn-warning{% endif %}" data-user-id="{{ u.id }}">
+                      {% if u.is_suspended %}Activate{% else %}Suspend{% endif %}
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+
+// Property Status Doughnut Chart
+const ctx = document.getElementById('statusChart').getContext('2d');
+new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Available', 'Sold', 'Rented'],
+    datasets: [{
+      data: [{{ available_count }}, {{ sold_count }}, {{ rented_count }}],
+      backgroundColor: ['rgba(46,204,113,0.8)', 'rgba(231,76,60,0.8)', 'rgba(243,156,18,0.8)'],
+      borderColor: ['#2ECC71', '#E74C3C', '#F39C12'],
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#8A96A8', padding: 20, font: { size: 13 } } }
+    },
+    cutout: '65%',
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}

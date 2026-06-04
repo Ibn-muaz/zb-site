@@ -1,0 +1,285 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}ZB Lands and Home — Premium Real Estate in Nigeria{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero-section" id="hero">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 hero-content animate__animated animate__fadeInLeft">
+        <div class="hero-badge"><i class="bi bi-award-fill"></i>Nigeria's #1 Premium Real Estate</div>
+        <h1 class="hero-title">
+          Find Your <span class="accent">Dream</span><br/>Property Today
+        </h1>
+        <p class="hero-subtitle">
+          Discover exceptional properties — from luxury villas to modern apartments.
+          ZB Lands and Home connects you with Nigeria's finest real estate.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{% url 'property-list' %}" class="btn btn-gold btn-lg">
+            <i class="bi bi-search me-2"></i>Browse Properties
+          </a>
+          <a href="{% url 'contact' %}" class="btn btn-gold-outline btn-lg">
+            <i class="bi bi-headset me-2"></i>Talk to an Agent
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number" data-count="{{ total_properties }}" data-suffix="+">0+</span>
+            <span class="stat-label">Properties</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" data-count="{{ total_sold }}" data-suffix="+">0+</span>
+            <span class="stat-label">Sold</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" data-count="{{ total_rented }}" data-suffix="+">0+</span>
+            <span class="stat-label">Rented</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" data-count="98" data-suffix="%">0%</span>
+            <span class="stat-label">Satisfaction</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 animate__animated animate__fadeInRight">
+        <div class="hero-search">
+          <h5><i class="bi bi-search me-2"></i>Find Your Property</h5>
+          <form action="{% url 'property-list' %}" method="GET">
+            <div class="row g-3">
+              <div class="col-12">
+                <input type="text" name="search" class="form-control" placeholder="Search by location, title..." />
+              </div>
+              <div class="col-6">
+                <select name="property_type" class="form-select">
+                  <option value="">All Types</option>
+                  <option value="house">House</option>
+                  <option value="apartment">Apartment</option>
+                  <option value="villa">Villa</option>
+                  <option value="duplex">Duplex</option>
+                  <option value="land">Land</option>
+                  <option value="commercial">Commercial</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <select name="listing_type" class="form-select">
+                  <option value="">For Sale / Rent</option>
+                  <option value="sale">For Sale</option>
+                  <option value="rent">For Rent</option>
+                  <option value="shortlet">Short Let</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <input type="text" name="city" class="form-control" placeholder="City" />
+              </div>
+              <div class="col-6">
+                <select name="bedrooms_min" class="form-select">
+                  <option value="">Bedrooms</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                  <option value="5">5+</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-gold w-100">
+                  <i class="bi bi-search me-2"></i>Search Properties
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorative orbs -->
+  <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.06) 0%,transparent 70%);top:-100px;right:-100px;pointer-events:none;"></div>
+  <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.04) 0%,transparent 70%);bottom:0;left:5%;pointer-events:none;"></div>
+</section>
+
+<!-- ═══════════ FEATURED PROPERTIES ═══════════ -->
+<section class="py-5 mt-5">
+  <div class="container">
+    <div class="row align-items-center mb-4">
+      <div class="col">
+        <div class="section-badge"><i class="bi bi-star-fill"></i>Featured</div>
+        <h2 class="section-title">Featured <span class="accent">Properties</span></h2>
+        <div class="section-divider"></div>
+      </div>
+      <div class="col-auto">
+        <a href="{% url 'property-list' %}?is_featured=true" class="btn btn-gold-outline btn-sm">
+          View All <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+
+    {% if featured_properties %}
+    <div class="row g-4">
+      {% for prop in featured_properties %}
+      <div class="col-lg-4 col-md-6 animate-on-scroll">
+        {% include "properties/_card.html" with property=prop %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-buildings" style="font-size:3rem;opacity:.3"></i>
+      <p class="mt-3">No featured properties yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ═══════════ WHY CHOOSE US ═══════════ -->
+<section class="py-5" style="background:linear-gradient(135deg,rgba(15,32,64,.8),rgba(10,22,40,.9));border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-badge"><i class="bi bi-shield-check"></i>Why ZB Lands and Home</div>
+      <h2 class="section-title">The <span class="accent">Smarter</span> Way to Find Property</h2>
+    </div>
+    <div class="row g-4">
+      {% for item in "1234"|make_list %}
+      <div class="col-lg-3 col-md-6 animate-on-scroll">
+        <div class="text-center p-4 glass-card h-100">
+          {% if forloop.counter == 1 %}
+          <div class="stat-icon stat-icon-gold mx-auto mb-3" style="width:64px;height:64px;border-radius:16px"><i class="bi bi-shield-check fs-3"></i></div>
+          <h5 class="font-heading">Verified Listings</h5>
+          <p class="text-muted small">Every property is verified by our team for authenticity and accuracy.</p>
+          {% elif forloop.counter == 2 %}
+          <div class="stat-icon stat-icon-success mx-auto mb-3" style="width:64px;height:64px;border-radius:16px"><i class="bi bi-chat-dots fs-3"></i></div>
+          <h5 class="font-heading">Smart Negotiation</h5>
+          <p class="text-muted small">Negotiate prices directly with our agents in real-time through the platform.</p>
+          {% elif forloop.counter == 3 %}
+          <div class="stat-icon stat-icon-info mx-auto mb-3" style="width:64px;height:64px;border-radius:16px"><i class="bi bi-phone fs-3"></i></div>
+          <h5 class="font-heading">Mobile Ready</h5>
+          <p class="text-muted small">Browse and manage properties on-the-go with our Android app.</p>
+          {% else %}
+          <div class="stat-icon stat-icon-warning mx-auto mb-3" style="width:64px;height:64px;border-radius:16px"><i class="bi bi-currency-exchange fs-3"></i></div>
+          <h5 class="font-heading">Secure Payments</h5>
+          <p class="text-muted small">Pay booking fees and deposits securely through our encrypted payment system.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ RECENT LISTINGS ═══════════ -->
+<section class="py-5">
+  <div class="container">
+    <div class="row align-items-center mb-4">
+      <div class="col">
+        <div class="section-badge"><i class="bi bi-clock-history"></i>New Listings</div>
+        <h2 class="section-title">Recently <span class="accent">Added</span></h2>
+        <div class="section-divider"></div>
+      </div>
+      <div class="col-auto">
+        <a href="{% url 'property-list' %}" class="btn btn-gold-outline btn-sm">
+          All Properties <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="row g-4">
+      {% for prop in recent_properties %}
+      <div class="col-lg-3 col-md-6 animate-on-scroll">
+        {% include "properties/_card.html" with property=prop %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TESTIMONIALS ═══════════ -->
+{% if testimonials %}
+<section class="py-5" style="background:rgba(15,32,64,.5);border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-badge"><i class="bi bi-chat-quote"></i>Testimonials</div>
+      <h2 class="section-title">What Our <span class="accent">Clients</span> Say</h2>
+    </div>
+    <div class="row g-4">
+      {% for t in testimonials %}
+      <div class="col-lg-4 col-md-6 animate-on-scroll">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">
+            {% for i in "12345"|make_list %}
+              <i class="bi bi-star{% if forloop.counter <= t.rating %}-fill{% endif %}"></i>
+            {% endfor %}
+          </div>
+          <p class="testimonial-text">"{{ t.message }}"</p>
+          <div class="testimonial-author">
+            {% if t.photo %}
+              <img src="{{ t.photo.url }}" alt="{{ t.name }}" class="testimonial-avatar" />
+            {% else %}
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy)">{{ t.name|first }}</div>
+            {% endif %}
+            <div>
+              <p class="testimonial-name">{{ t.name }}</p>
+              <p class="testimonial-role">{{ t.designation }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══════════ BLOG POSTS ═══════════ -->
+{% if blog_posts %}
+<section class="py-5">
+  <div class="container">
+    <div class="row align-items-center mb-4">
+      <div class="col">
+        <div class="section-badge"><i class="bi bi-newspaper"></i>Blog</div>
+        <h2 class="section-title">Real Estate <span class="accent">Insights</span></h2>
+        <div class="section-divider"></div>
+      </div>
+      <div class="col-auto"><a href="{% url 'blog-list' %}" class="btn btn-gold-outline btn-sm">All Posts <i class="bi bi-arrow-right ms-1"></i></a></div>
+    </div>
+    <div class="row g-4">
+      {% for post in blog_posts %}
+      <div class="col-lg-4 col-md-6">
+        <div class="property-card h-100">
+          {% if post.featured_image %}
+          <div class="property-card-img">
+            <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy" />
+          </div>
+          {% endif %}
+          <div class="property-card-body">
+            <span class="property-type-tag">{{ post.created_at|date:"M d, Y" }}</span>
+            <h5 class="property-title">{{ post.title }}</h5>
+            <p class="text-muted small">{{ post.excerpt|truncatechars:100 }}</p>
+            <a href="{% url 'blog-detail' post.slug %}" class="btn btn-gold-outline btn-sm mt-auto">Read More <i class="bi bi-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══════════ CTA BANNER ═══════════ -->
+<section class="py-5" style="background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(10,22,40,.9));border-top:1px solid var(--border);">
+  <div class="container text-center">
+    <h2 class="section-title mb-3">Ready to Find Your <span class="accent">Dream Home?</span></h2>
+    <p class="text-muted mb-4 mx-auto" style="max-width:520px">
+      Join thousands of satisfied clients who found their perfect property through ZB Lands and Home.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="{% url 'register' %}" class="btn btn-gold btn-lg"><i class="bi bi-person-plus me-2"></i>Get Started Free</a>
+      <a href="{% url 'property-list' %}" class="btn btn-gold-outline btn-lg"><i class="bi bi-buildings me-2"></i>Browse Listings</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

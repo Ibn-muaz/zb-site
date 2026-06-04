@@ -1,0 +1,66 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Negotiations — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3 class="font-heading mb-0">My <span class="text-gold">Negotiations</span></h3>
+    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a>
+  </div>
+
+  <div class="glass-card p-0">
+    {% if negotiations %}
+    <div class="table-responsive">
+      <table class="zb-table mb-0">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Asking Price</th>
+            <th>My Current Offer</th>
+            <th>Status</th>
+            <th>Started</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for neg in negotiations %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <img src="{{ neg.listing.images.first.image.url }}" alt="Prop" style="width:48px;height:48px;object-fit:cover;border-radius:6px" />
+                <div>
+                  <div class="fw-600">{{ neg.listing.title|truncatechars:35 }}</div>
+                  <div class="text-muted small">{{ neg.listing.city }}, {{ neg.listing.state }}</div>
+                </div>
+              </div>
+            </td>
+            <td>₦{{ neg.asking_price|floatformat:0|intcomma }}</td>
+            <td class="text-gold fw-600">₦{{ neg.current_offer|floatformat:0|intcomma }}</td>
+            <td><span class="status-pill status-{{ neg.status }}">{{ neg.get_status_display }}</span></td>
+            <td class="text-muted small">{{ neg.created_at|date:"M d, Y" }}</td>
+            <td>
+              <a href="{% url 'negotiation-detail' neg.pk %}" class="btn btn-gold-outline btn-sm px-3">
+                <i class="bi bi-chat-dots me-1"></i>View
+                {% if neg.unread_count %}
+                <span class="badge bg-danger ms-1" style="font-size:.65rem">{{ neg.unread_count }}</span>
+                {% endif %}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-5 text-center text-muted">
+      <i class="bi bi-chat-square-dots" style="font-size:3rem;opacity:.3"></i>
+      <h4 class="font-heading mt-3 text-gold">No Negotiations Yet</h4>
+      <p>You haven't made any offers on properties yet.</p>
+      <a href="{% url 'property-list' %}" class="btn btn-gold mt-2"><i class="bi bi-search me-2"></i>Browse Properties</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

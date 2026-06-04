@@ -1,0 +1,140 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Dashboard — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="dashboard-sidebar">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <h5 class="font-heading mb-1">{{ user.full_name }}</h5>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+          {% if not user.is_verified %}
+          <div class="mt-2 small text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Email not verified</div>
+          {% endif %}
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'dashboard:home' %}" class="sidebar-link active"><i class="bi bi-grid"></i>Dashboard</a>
+          <a href="{% url 'dashboard:saved-properties' %}" class="sidebar-link"><i class="bi bi-heart"></i>Saved Properties <span class="ms-auto badge" style="background:rgba(201,168,76,.15);color:var(--gold)">{{ saved_properties.count }}</span></a>
+          <a href="{% url 'dashboard:my-negotiations' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations <span class="ms-auto badge" style="background:rgba(201,168,76,.15);color:var(--gold)">{{ total_negotiations }}</span></a>
+          <a href="{% url 'dashboard:my-payments' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'api-notifications' %}" class="sidebar-link"><i class="bi bi-bell"></i>Notifications {% if unread_messages %}<span class="ms-auto badge bg-danger">{{ unread_messages }}</span>{% endif %}</a>
+          <a href="{% url 'profile' %}" class="sidebar-link"><i class="bi bi-person"></i>Edit Profile</a>
+          <a href="{% url 'property-list' %}" class="sidebar-link"><i class="bi bi-buildings"></i>Browse Properties</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <h3 class="font-heading mb-4">Welcome back, <span class="text-gold">{{ user.first_name }}</span>! 👋</h3>
+
+      <!-- Stats Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-gold"><i class="bi bi-heart-fill"></i></div>
+            <div><div class="stat-value">{{ saved_properties.count }}</div><div class="stat-desc">Saved Properties</div></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-info"><i class="bi bi-chat-dots-fill"></i></div>
+            <div><div class="stat-value">{{ total_negotiations }}</div><div class="stat-desc">Negotiations</div></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-warning"><i class="bi bi-clock-history"></i></div>
+            <div><div class="stat-value">{{ active_negotiations }}</div><div class="stat-desc">Active Offers</div></div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-success"><i class="bi bi-wallet2"></i></div>
+            <div><div class="stat-value">{{ my_payments.count }}</div><div class="stat-desc">Payments</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Negotiations -->
+      <div class="table-wrapper mb-4">
+        <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom:1px solid var(--border)">
+          <h5 class="font-heading mb-0"><i class="bi bi-chat-dots-fill text-gold me-2"></i>Recent Negotiations</h5>
+          <a href="{% url 'dashboard:my-negotiations' %}" class="btn btn-gold-outline btn-sm">View All</a>
+        </div>
+        {% if my_negotiations %}
+        <table class="zb-table">
+          <thead><tr><th>Property</th><th>Offer</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {% for neg in my_negotiations %}
+            <tr>
+              <td class="fw-600">{{ neg.listing.title|truncatechars:30 }}</td>
+              <td class="text-gold">₦{{ neg.current_offer|floatformat:0|intcomma }}</td>
+              <td><span class="status-pill status-{{ neg.status }}">{{ neg.get_status_display }}</span></td>
+              <td class="text-muted small">{{ neg.created_at|date:"M d, Y" }}</td>
+              <td><a href="{% url 'negotiation-detail' neg.pk %}" class="btn btn-gold btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+          <i class="bi bi-chat-dots" style="font-size:2.5rem;opacity:.3"></i>
+          <p class="mt-2">No negotiations yet. <a href="{% url 'property-list' %}" class="text-gold">Browse properties</a> to make an offer.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Saved Properties -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="font-heading mb-0"><i class="bi bi-heart-fill text-gold me-2"></i>Saved Properties</h5>
+          <a href="{% url 'dashboard:saved-properties' %}" class="btn btn-gold-outline btn-sm">View All</a>
+        </div>
+        {% if saved_properties %}
+        <div class="row g-3">
+          {% for saved in saved_properties %}
+          <div class="col-md-4">{% include "properties/_card.html" with property=saved.property is_saved=True %}</div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted glass-card">
+          <i class="bi bi-heart" style="font-size:2.5rem;opacity:.3"></i>
+          <p class="mt-2">No saved properties. <a href="{% url 'property-list' %}" class="text-gold">Start browsing</a>!</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Recent Payments -->
+      {% if my_payments %}
+      <div class="table-wrapper">
+        <div class="p-4 d-flex justify-content-between align-items-center" style="border-bottom:1px solid var(--border)">
+          <h5 class="font-heading mb-0"><i class="bi bi-wallet2 text-gold me-2"></i>Recent Payments</h5>
+          <a href="{% url 'dashboard:my-payments' %}" class="btn btn-gold-outline btn-sm">View All</a>
+        </div>
+        <table class="zb-table">
+          <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for pmt in my_payments %}
+            <tr>
+              <td>{{ pmt.get_payment_type_display }}</td>
+              <td class="text-gold fw-600">₦{{ pmt.amount|floatformat:0|intcomma }}</td>
+              <td><span class="status-pill status-{{ pmt.status }}">{{ pmt.get_status_display }}</span></td>
+              <td class="text-muted small">{{ pmt.created_at|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

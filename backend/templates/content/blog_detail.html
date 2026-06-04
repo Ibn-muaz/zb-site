@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ post.title }} — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<!-- ═══ HERO / COVER ═══ -->
+<section style="padding-top: 80px; min-height: 420px; position:relative; overflow:hidden; display:flex; align-items:flex-end;">
+  {% if post.featured_image %}
+    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}"
+         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+  {% else %}
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-primary));z-index:0;"></div>
+  {% endif %}
+  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.5) 60%,rgba(0,0,0,.2) 100%);z-index:1;"></div>
+  <div class="container position-relative py-5" style="z-index:2;">
+    <div class="row">
+      <div class="col-lg-8">
+        <a href="{% url 'blog-list' %}" class="btn btn-gold-outline btn-sm mb-3"><i class="bi bi-arrow-left me-2"></i>Back to Blog</a>
+        <h1 class="display-5 font-heading text-white mb-3">{{ post.title }}</h1>
+        <div class="d-flex flex-wrap gap-3 align-items-center text-white-50 small">
+          {% if post.author %}<span><i class="bi bi-person-circle me-1"></i>{{ post.author }}</span>{% endif %}
+          <span><i class="bi bi-calendar3 me-1"></i>{{ post.created_at|date:"F d, Y" }}</span>
+          {% if post.view_count %}<span><i class="bi bi-eye me-1"></i>{{ post.view_count }} views</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BLOG CONTENT ═══ -->
+<section class="py-5">
+  <div class="container">
+    <div class="row g-5">
+
+      <!-- Main Article -->
+      <div class="col-lg-8">
+        <article class="glass-card p-5">
+          <div class="blog-content" style="line-height:1.9;color:var(--text-secondary);">
+            {{ post.content|safe }}
+          </div>
+        </article>
+
+        <!-- Share Section -->
+        <div class="glass-card p-4 mt-4">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <span class="fw-600"><i class="bi bi-share text-gold me-2"></i>Share this article</span>
+            <div class="d-flex gap-2">
+              <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ post.title }}" target="_blank" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+              <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="social-btn"><i class="bi bi-facebook"></i></a>
+              <a href="https://api.whatsapp.com/send?text={{ post.title }} {{ request.build_absolute_uri }}" target="_blank" class="social-btn"><i class="bi bi-whatsapp"></i></a>
+              <a href="https://www.linkedin.com/shareArticle?url={{ request.build_absolute_uri }}&title={{ post.title }}" target="_blank" class="social-btn"><i class="bi bi-linkedin"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+
+        <!-- Author Card -->
+        {% if post.author %}
+        <div class="glass-card p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-person-circle text-gold me-2"></i>About the Author</h6>
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#a07520);display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-size:1.2rem;flex-shrink:0;">
+              {{ post.author|first|upper }}
+            </div>
+            <div>
+              <p class="mb-0 fw-600">{{ post.author }}</p>
+              <span class="small text-muted">ZB Lands & Home Expert</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Related Posts -->
+        {% if related_posts %}
+        <div class="glass-card p-4">
+          <h6 class="fw-600 mb-4"><i class="bi bi-collection text-gold me-2"></i>Related Articles</h6>
+          <div class="d-flex flex-column gap-3">
+            {% for rp in related_posts %}
+            <a href="{% url 'blog-detail' rp.slug %}" class="text-decoration-none" style="color:var(--text-primary);">
+              <div class="d-flex gap-3 align-items-start p-2" style="border-radius:8px;transition:background .2s;" onmouseover="this.style.background='rgba(201,168,76,.08)'" onmouseout="this.style.background='transparent'">
+                <div style="width:60px;height:60px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+                  {% if rp.featured_image %}
+                    <img src="{{ rp.featured_image.url }}" alt="{{ rp.title }}" class="w-100 h-100" style="object-fit:cover;" />
+                  {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:var(--bg-secondary);">
+                      <i class="bi bi-newspaper text-muted"></i>
+                    </div>
+                  {% endif %}
+                </div>
+                <div>
+                  <p class="mb-1 small fw-600">{{ rp.title|truncatechars:55 }}</p>
+                  <span class="text-muted" style="font-size:.75rem;">{{ rp.created_at|date:"M d, Y" }}</span>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- CTA -->
+        <div class="glass-card p-4 mt-4 text-center" style="border-top:3px solid var(--gold);">
+          <i class="bi bi-buildings-fill text-gold" style="font-size:2rem;"></i>
+          <h6 class="font-heading mt-3 mb-2">Find Your Dream Property</h6>
+          <p class="text-muted small mb-3">Browse our exclusive listings across Nigeria.</p>
+          <a href="{% url 'property-list' %}" class="btn btn-gold btn-sm w-100">Browse Properties</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

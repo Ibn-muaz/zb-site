@@ -1,0 +1,82 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Saved Properties — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="padding-top: 120px !important;">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="dashboard-sidebar">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <h5 class="font-heading mb-1">{{ user.full_name }}</h5>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'dashboard:home' %}" class="sidebar-link"><i class="bi bi-grid"></i>Dashboard</a>
+          <a href="{% url 'dashboard:saved-properties' %}" class="sidebar-link active"><i class="bi bi-heart-fill"></i>Saved Properties</a>
+          <a href="{% url 'dashboard:my-negotiations' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'dashboard:my-payments' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'api-notifications' %}" class="sidebar-link"><i class="bi bi-bell"></i>Notifications</a>
+          <a href="{% url 'profile' %}" class="sidebar-link"><i class="bi bi-person"></i>Edit Profile</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="font-heading mb-0"><i class="bi bi-heart-fill text-gold me-2"></i>Saved Properties</h3>
+        <span class="section-badge">{{ saved_properties|length }} saved</span>
+      </div>
+
+      {% if saved_properties %}
+      <div class="row g-4">
+        {% for saved in saved_properties %}
+        <div class="col-md-6 col-xl-4">
+          <div class="glass-card h-100" style="overflow:hidden;">
+            <!-- Property Image Placeholder -->
+            <div style="height:160px;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-primary));display:flex;align-items:center;justify-content:center;position:relative;">
+              {% if saved.property.featured_image %}
+              <img src="{{ saved.property.featured_image.url }}" alt="{{ saved.property.title }}" class="w-100 h-100" style="object-fit:cover;" />
+              {% else %}
+              <i class="bi bi-building" style="font-size:3rem;opacity:.2;"></i>
+              {% endif %}
+              <!-- Remove button -->
+              <form method="POST" action="{% url 'save-property' saved.property.slug %}" style="position:absolute;top:10px;right:10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;" title="Remove from saved">
+                  <i class="bi bi-heart-fill text-gold"></i>
+                </button>
+              </form>
+            </div>
+            <div class="p-3">
+              <h6 class="font-heading mb-1">{{ saved.property.title|truncatechars:45 }}</h6>
+              <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-gold"></i>{{ saved.property.city }}</p>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="text-gold fw-bold">₦{{ saved.property.price|floatformat:0|intcomma }}</span>
+                <a href="{% url 'property-detail' saved.property.slug %}" class="btn btn-gold btn-sm">View</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <!-- Empty state -->
+      <div class="glass-card p-5 text-center">
+        <i class="bi bi-heart" style="font-size:4rem;opacity:.3;color:var(--gold);"></i>
+        <h5 class="font-heading mt-3 mb-2">No Saved Properties</h5>
+        <p class="text-muted mb-4">Start browsing and click the heart icon on any property to save it here for easy access later.</p>
+        <a href="{% url 'property-list' %}" class="btn btn-gold"><i class="bi bi-search me-2"></i>Browse Properties</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

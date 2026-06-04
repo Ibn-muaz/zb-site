@@ -1,0 +1,85 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Negotiations — ZB Lands and Home{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="padding-top: 120px !important;">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="dashboard-sidebar">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <h5 class="font-heading mb-1">{{ user.full_name }}</h5>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'dashboard:home' %}" class="sidebar-link"><i class="bi bi-grid"></i>Dashboard</a>
+          <a href="{% url 'dashboard:saved-properties' %}" class="sidebar-link"><i class="bi bi-heart"></i>Saved Properties</a>
+          <a href="{% url 'dashboard:my-negotiations' %}" class="sidebar-link active"><i class="bi bi-chat-dots-fill"></i>Negotiations</a>
+          <a href="{% url 'dashboard:my-payments' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'api-notifications' %}" class="sidebar-link"><i class="bi bi-bell"></i>Notifications</a>
+          <a href="{% url 'profile' %}" class="sidebar-link"><i class="bi bi-person"></i>Edit Profile</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="font-heading mb-0"><i class="bi bi-chat-dots-fill text-gold me-2"></i>My Negotiations</h3>
+        <span class="section-badge">{{ negotiations|length }} total</span>
+      </div>
+
+      {% if negotiations %}
+      <div class="table-wrapper">
+        <table class="zb-table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Offered Price</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for neg in negotiations %}
+            <tr>
+              <td>
+                <div class="fw-600">{{ neg.property.title|truncatechars:35 }}</div>
+              </td>
+              <td class="text-gold fw-600">₦{{ neg.offered_price|floatformat:0|intcomma }}</td>
+              <td>
+                <span class="status-pill status-{{ neg.status }}">
+                  {{ neg.status|capfirst }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ neg.created_at|date:"M d, Y" }}</td>
+              <td class="text-center">
+                <a href="{% url 'negotiation-detail' neg.id %}" class="btn btn-gold btn-sm">
+                  <i class="bi bi-eye me-1"></i>View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <!-- Empty state -->
+      <div class="glass-card p-5 text-center">
+        <i class="bi bi-chat-dots" style="font-size:4rem;opacity:.3;color:var(--gold);"></i>
+        <h5 class="font-heading mt-3 mb-2">No Negotiations Yet</h5>
+        <p class="text-muted mb-4">Browse our property listings and make an offer to start a negotiation with our team.</p>
+        <a href="{% url 'property-list' %}" class="btn btn-gold"><i class="bi bi-buildings me-2"></i>Browse Properties</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

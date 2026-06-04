@@ -1,0 +1,288 @@
+﻿{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ property.title }} — ZB Lands and Home{% endblock %}
+{% block meta_description %}{{ property.description|truncatechars:160 }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb" style="background:none;padding:0">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-gold">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'property-list' %}" class="text-gold">Properties</a></li>
+      <li class="breadcrumb-item active text-muted">{{ property.title|truncatechars:30 }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-5">
+    <!-- ── LEFT COLUMN ── -->
+    <div class="col-lg-8">
+
+      <!-- Gallery -->
+      <div class="property-gallery mb-4 animate__animated animate__fadeIn">
+        <div class="gallery-main position-relative">
+          {% with imgs=property.images.all %}
+          {% if imgs %}
+            <img src="{{ imgs.0.image.url }}" alt="{{ property.title }}" id="galleryMain" style="transition:opacity .25s;border-radius:16px;" />
+            <!-- Fullscreen btn -->
+            <button onclick="openLightbox()" class="btn btn-icon" style="position:absolute;top:12px;right:12px;z-index:5;background:rgba(10,22,40,.7)"><i class="bi bi-fullscreen"></i></button>
+          {% else %}
+            <div style="height:480px;background:linear-gradient(135deg,var(--navy-mid),var(--navy-light));display:flex;align-items:center;justify-content:center;border-radius:16px;font-size:5rem;color:var(--text-muted);opacity:.3"><i class="bi bi-buildings"></i></div>
+          {% endif %}
+          {% endwith %}
+        </div>
+        {% if property.images.count > 1 %}
+        <div class="gallery-thumbs mt-2">
+          {% for img in property.images.all %}
+          <div class="gallery-thumb" data-src="{{ img.image.url }}">
+            <img src="{{ img.image.url }}" alt="Photo {{ forloop.counter }}" />
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Property Header -->
+      <div class="mb-4">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <span class="badge-featured px-3 py-1" style="background:rgba(201,168,76,.15);color:var(--gold);border-radius:20px;font-size:.8rem">
+            {{ property.get_property_type_display }}
+          </span>
+          <span class="badge-status badge-{{ property.status }}">{{ property.get_status_display }}</span>
+          {% if property.is_featured %}<span class="badge-featured"><i class="bi bi-star-fill me-1"></i>Featured</span>{% endif %}
+        </div>
+        <h1 class="font-heading mb-2" style="font-size:clamp(1.5rem,4vw,2.2rem)">{{ property.title }}</h1>
+        <p class="text-muted mb-3"><i class="bi bi-geo-alt-fill text-gold me-2"></i>{{ property.address }}, {{ property.city }}, {{ property.state }}, {{ property.country }}</p>
+        <div class="d-flex gap-4 align-items-center flex-wrap">
+          <div class="property-price-large">{{ property.formatted_price }}{% if property.listing_type == 'rent' %}<span class="text-muted fs-6">/year</span>{% endif %}</div>
+          {% if property.price_negotiable %}<span class="text-muted small"><i class="bi bi-chat-dots-fill text-gold me-1"></i>Price is negotiable</span>{% endif %}
+          <span class="text-muted small"><i class="bi bi-eye text-gold me-1"></i>{{ property.view_count }} views</span>
+        </div>
+      </div>
+
+      <!-- Specs Grid -->
+      <div class="detail-specs mb-4">
+        {% if property.bedrooms %}
+        <div class="detail-spec">
+          <i class="bi bi-door-open"></i>
+          <span>{{ property.bedrooms }}</span>
+          <small>Bedrooms</small>
+        </div>
+        {% endif %}
+        {% if property.bathrooms %}
+        <div class="detail-spec">
+          <i class="bi bi-droplet"></i>
+          <span>{{ property.bathrooms }}</span>
+          <small>Bathrooms</small>
+        </div>
+        {% endif %}
+        {% if property.parking_spaces %}
+        <div class="detail-spec">
+          <i class="bi bi-car-front"></i>
+          <span>{{ property.parking_spaces }}</span>
+          <small>Parking</small>
+        </div>
+        {% endif %}
+        {% if property.area_sqft %}
+        <div class="detail-spec">
+          <i class="bi bi-rulers"></i>
+          <span>{{ property.area_sqft }}</span>
+          <small>Sq Ft</small>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Description -->
+      <div class="glass-card p-4 mb-4">
+        <h4 class="font-heading text-gold mb-3"><i class="bi bi-info-circle me-2"></i>Description</h4>
+        <div class="text-muted" style="line-height:1.9;white-space:pre-line">{{ property.description }}</div>
+      </div>
+
+      <!-- Amenities -->
+      {% if property.amenities.exists %}
+      <div class="glass-card p-4 mb-4">
+        <h4 class="font-heading text-gold mb-3"><i class="bi bi-check2-circle me-2"></i>Amenities</h4>
+        <div class="amenity-list">
+          {% for a in property.amenities.all %}
+          <span class="amenity-badge"><i class="bi bi-{{ a.icon }}"></i>{{ a.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Virtual Tour -->
+      {% if property.virtual_tour_url %}
+      <div class="glass-card p-4 mb-4">
+        <h4 class="font-heading text-gold mb-3"><i class="bi bi-badge-vr me-2"></i>Virtual Tour</h4>
+        <a href="{{ property.virtual_tour_url }}" target="_blank" class="btn btn-gold-outline">
+          <i class="bi bi-badge-vr me-2"></i>View 360° Virtual Tour
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Map -->
+      {% if property.latitude and property.longitude %}
+      <div class="glass-card p-4 mb-4">
+        <h4 class="font-heading text-gold mb-3"><i class="bi bi-geo-alt me-2"></i>Location</h4>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <div id="propertyMap"></div>
+      </div>
+      {% endif %}
+
+      <!-- Related Properties -->
+      {% if related_properties %}
+      <div class="mt-5">
+        <h4 class="font-heading mb-4">Similar <span class="text-gold">Properties</span></h4>
+        <div class="row g-4">
+          {% for p in related_properties %}
+          <div class="col-md-6">{% include "properties/_card.html" with property=p %}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── RIGHT COLUMN (Sticky Info Card) ── -->
+    <div class="col-lg-4">
+      <div class="property-info-card">
+        <h5 class="font-heading text-gold mb-4"><i class="bi bi-info-circle me-2"></i>Property Info</h5>
+
+        <!-- Quick Stats -->
+        <ul class="list-unstyled mb-4" style="font-size:.875rem">
+          <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span class="text-muted">Type</span><span class="fw-600">{{ property.get_property_type_display }}</span>
+          </li>
+          <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span class="text-muted">Listing</span><span class="fw-600">{{ property.get_listing_type_display }}</span>
+          </li>
+          <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span class="text-muted">Status</span><span class="status-pill status-{{ property.status }}">{{ property.get_status_display }}</span>
+          </li>
+          <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span class="text-muted">City</span><span class="fw-600">{{ property.city }}</span>
+          </li>
+          <li class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span class="text-muted">State</span><span class="fw-600">{{ property.state }}</span>
+          </li>
+          <li class="d-flex justify-content-between py-2">
+            <span class="text-muted">Listed</span><span class="fw-600">{{ property.created_at|date:"M d, Y" }}</span>
+          </li>
+        </ul>
+
+        <!-- Action Buttons -->
+        {% if property.status == 'available' %}
+          {% if user.is_authenticated %}
+            {% if existing_negotiation %}
+              <a href="{% url 'negotiation-detail' existing_negotiation.pk %}" class="btn btn-gold w-100 mb-3">
+                <i class="bi bi-chat-dots me-2"></i>View Active Negotiation
+              </a>
+            {% else %}
+              <button class="btn btn-gold w-100 mb-3" data-bs-toggle="modal" data-bs-target="#offerModal">
+                <i class="bi bi-cash-coin me-2"></i>Make an Offer
+              </button>
+            {% endif %}
+            <a href="{% url 'payment-checkout' property.id %}?type=booking_fee" class="btn btn-gold-outline w-100 mb-3">
+              <i class="bi bi-credit-card me-2"></i>Pay Booking Fee
+            </a>
+            <button class="save-btn w-100 btn {% if is_saved %}btn-danger{% else %}btn-outline-secondary{% endif %} mb-3" data-slug="{{ property.slug }}" style="width:auto;height:auto;padding:8px 16px;border-radius:8px;position:static;font-size:.875rem">
+              <i class="bi bi-heart{% if is_saved %}-fill{% endif %} me-2"></i>{% if is_saved %}Saved{% else %}Save Property{% endif %}
+            </button>
+          {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-gold w-100 mb-3">
+              <i class="bi bi-cash-coin me-2"></i>Login to Make an Offer
+            </a>
+          {% endif %}
+        {% else %}
+          <div class="alert" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:10px;color:#E74C3C;font-size:.875rem">
+            <i class="bi bi-x-circle me-2"></i>This property is {{ property.get_status_display }}
+          </div>
+        {% endif %}
+
+        <!-- Share -->
+        <div class="d-flex gap-2 mt-3">
+          <button onclick="navigator.clipboard.writeText(window.location.href);ZBProps.showToast('Link copied!','success')" class="btn btn-outline-secondary btn-sm flex-1 w-100">
+            <i class="bi bi-share me-2"></i>Share
+          </button>
+        </div>
+
+        <!-- Agent Info -->
+        <div class="mt-4 p-3" style="background:rgba(201,168,76,.05);border:1px solid var(--border);border-radius:12px">
+          <p class="text-muted small mb-2">Listed by</p>
+          <div class="d-flex align-items-center gap-2">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;color:var(--navy);font-weight:700">
+              {{ property.admin.first_name|first|default:"N" }}
+            </div>
+            <div>
+              <p class="mb-0 fw-600 small">{{ property.admin.full_name|default:"ZB Lands and Home" }}</p>
+              <p class="mb-0 text-muted" style="font-size:.75rem">Verified Agent</p>
+            </div>
+          </div>
+          <a href="{% url 'contact' %}" class="btn btn-outline-secondary btn-sm w-100 mt-3">
+            <i class="bi bi-envelope me-2"></i>Contact Agent
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OFFER MODAL ═══ -->
+{% if user.is_authenticated and property.status == 'available' %}
+<div class="modal fade" id="offerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-cash-coin text-gold me-2"></i>Make an Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{% url 'create-negotiation' property.slug %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3 p-3" style="background:rgba(201,168,76,.06);border-radius:10px;border:1px solid var(--border)">
+            <p class="text-muted small mb-1">Asking Price</p>
+            <p class="fw-600 text-gold mb-0" style="font-size:1.3rem">{{ property.formatted_price }}</p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Your Offer (₦)</label>
+            <div class="input-group">
+              <span class="input-group-text" style="background:rgba(255,255,255,.05);border-color:var(--border);color:var(--gold)">₦</span>
+              <input type="number" name="offer_amount" class="form-control" placeholder="e.g. 45000000" required min="1" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message to Agent</label>
+            <textarea name="message_text" class="form-control" rows="4" placeholder="Introduce yourself and explain your offer..." required></textarea>
+          </div>
+          <div class="small text-muted">
+            <i class="bi bi-shield-check text-gold me-1"></i>Your offer is private and only visible to ZB Lands and Home agents.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-gold"><i class="bi bi-send me-2"></i>Submit Offer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+{% if property.latitude and property.longitude %}
+ZBProps.initMap({{ property.latitude }}, {{ property.longitude }}, "{{ property.title|escapejs }}");
+{% endif %}
+
+function openLightbox() {
+  const src = document.getElementById('galleryMain').src;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  overlay.innerHTML = `<img src="${src}" style="max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 0 60px rgba(0,0,0,.8)" />`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+</script>
+{% endblock %}
+{% endblock %}
