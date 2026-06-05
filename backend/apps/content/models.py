@@ -1,4 +1,4 @@
-﻿"""Content/CMS app models"""
+"""Content/CMS app models"""
 from django.db import models
 from django.conf import settings
 
@@ -6,8 +6,8 @@ from django.conf import settings
 class SiteSettings(models.Model):
     company_name = models.CharField(max_length=200, default='ZB Lands and Home')
     company_email = models.EmailField(default='info@ZBLandsAndHome.com')
-    company_phone = models.CharField(max_length=20, default='+234 800 000 0000')
-    company_address = models.TextField(default='Lagos, Nigeria')
+    company_phone = models.CharField(max_length=20, default='08169302054')
+    company_address = models.TextField(default='Sokoto, Nigeria')
     logo = models.ImageField(upload_to='site/', blank=True, null=True)
     favicon = models.ImageField(upload_to='site/', blank=True, null=True)
     hero_title = models.CharField(max_length=300, default='Find Your Dream Property')
