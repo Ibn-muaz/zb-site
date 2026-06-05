@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}{{ property.title }} — ZB Lands and Home{% endblock %}
+{% block title %}{{ property.title }} — Lands and Houses{% endblock %}
 {% block meta_description %}{{ property.description|truncatechars:160 }}{% endblock %}
 
 {% block content %}
@@ -215,7 +215,7 @@
               {{ property.admin.first_name|first|default:"N" }}
             </div>
             <div>
-              <p class="mb-0 fw-600 small">{{ property.admin.full_name|default:"ZB Lands and Home" }}</p>
+              <p class="mb-0 fw-600 small">{{ property.admin.full_name|default:"Lands and Houses" }}</p>
               <p class="mb-0 text-muted" style="font-size:.75rem">Verified Agent</p>
             </div>
           </div>
@@ -256,7 +256,7 @@
             <textarea name="message_text" class="form-control" rows="4" placeholder="Introduce yourself and explain your offer..." required></textarea>
           </div>
           <div class="small text-muted">
-            <i class="bi bi-shield-check text-gold me-1"></i>Your offer is private and only visible to ZB Lands and Home agents.
+            <i class="bi bi-shield-check text-gold me-1"></i>Your offer is private and only visible to Lands and Houses agents.
           </div>
         </div>
         <div class="modal-footer">

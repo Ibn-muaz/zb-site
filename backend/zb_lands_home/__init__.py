@@ -1,1 +1,1 @@
-﻿"""ZB Lands and Home Django project package"""
+﻿"""Lands and Houses Django project package"""

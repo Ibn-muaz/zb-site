@@ -62,7 +62,7 @@ class ContactView(View):
             )
             try:
                 send_mail(
-                    f'[ZB Lands and Home] New Inquiry: {subject}',
+                    f'[Lands and Houses] New Inquiry: {subject}',
                     f'From: {name} <{email}>\nPhone: {phone}\n\n{message}',
                     settings.DEFAULT_FROM_EMAIL,
                     [settings.EMAIL_HOST_USER or 'admin@ZBLandsAndHome.com'],

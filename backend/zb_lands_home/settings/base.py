@@ -1,5 +1,5 @@
 """
-ZB Lands and Home - Django Settings
+Lands and Houses - Django Settings
 """
 import os
 from pathlib import Path
@@ -165,7 +165,7 @@ EMAIL_PORT = env.int('EMAIL_PORT', default=587)
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = f'ZB Lands and Home <{EMAIL_HOST_USER}>'
+DEFAULT_FROM_EMAIL = f'Lands and Houses <{EMAIL_HOST_USER}>'
 
 # --- Stripe ---
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='')

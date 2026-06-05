@@ -1,5 +1,5 @@
 """
-Admin panel URL patterns - ZB Lands and Home
+Admin panel URL patterns - Lands and Houses
 Custom admin panel mounted at /admin-panel/ (separate from Django's /admin/).
 All views require admin or super_admin role.
 """

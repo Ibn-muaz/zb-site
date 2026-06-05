@@ -1,7 +1,7 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Checkout — ZB Lands and Home{% endblock %}
+{% block title %}Checkout — Lands and Houses{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -58,7 +58,7 @@
         <ul class="list-unstyled mb-0 border-top pt-3" style="border-color:var(--border)!important">
           <li class="d-flex justify-content-between mb-3">
             <span class="text-muted">Payment Type</span>
-            <span class="fw-600 text-capitalize">{{ payment_type|replace:"_| " }}</span>
+            <span class="fw-600 text-capitalize">{{ payment_type|title }}</span>
           </li>
           <li class="d-flex justify-content-between mb-3">
             <span class="text-muted">Customer</span>

@@ -1,5 +1,5 @@
 ﻿"""
-Accounts app Django signals - ZB Lands and Home
+Accounts app Django signals - Lands and Houses
 
 Signals:
   - post_save on CustomUser: sends a verification email when a new user is created.
@@ -47,7 +47,7 @@ def _send_verification_email(user):
         context = {
             'user': user,
             'verify_url': verify_url,
-            'site_name': 'ZB Lands and Home',
+            'site_name': 'Lands and Houses',
         }
 
         try:
@@ -59,17 +59,17 @@ def _send_verification_email(user):
             # Template not yet created – use a sensible plain-text fallback
             plain_message = (
                 f"Hi {user.first_name},\n\n"
-                f"Welcome to ZB Lands and Home!\n\n"
+                f"Welcome to Lands and Houses!\n\n"
                 f"Please verify your email address by visiting:\n"
                 f"{verify_url}\n\n"
                 f"This link expires after 24 hours.\n\n"
                 f"If you did not register, please ignore this email.\n\n"
-                f"Best regards,\nZB Lands and Home Team"
+                f"Best regards,\nLands and Houses Team"
             )
             html_message = None
 
         send_mail(
-            subject='Please Verify Your Email – ZB Lands and Home',
+            subject='Please Verify Your Email – Lands and Houses',
             message=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],

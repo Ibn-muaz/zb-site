@@ -79,10 +79,10 @@
             <tr>
               <td class="text-muted small">{{ forloop.counter }}</td>
               <td class="text-muted small">{{ pmt.user.email }}</td>
-              <td class="fw-600">{{ pmt.property.title|truncatechars:28 }}</td>
+              <td class="fw-600">{{ pmt.listing.title|truncatechars:28 }}</td>
               <td class="text-gold fw-600">₦{{ pmt.amount|floatformat:0|intcomma }}</td>
               <td>
-                <code style="font-size:.75rem;color:var(--text-muted);">{{ pmt.reference|truncatechars:20 }}</code>
+                <code style="font-size:.75rem;color:var(--text-muted);">{{ pmt.stripe_payment_intent_id|truncatechars:20 }}</code>
               </td>
               <td>
                 <span class="status-pill status-{{ pmt.status }}">{{ pmt.status|capfirst }}</span>

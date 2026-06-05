@@ -4,7 +4,7 @@ from django.conf import settings
 
 
 class SiteSettings(models.Model):
-    company_name = models.CharField(max_length=200, default='ZB Lands and Home')
+    company_name = models.CharField(max_length=200, default='Lands and Houses')
     company_email = models.EmailField(default='info@ZBLandsAndHome.com')
     company_phone = models.CharField(max_length=20, default='08169302054')
     company_address = models.TextField(default='Sokoto, Nigeria')
@@ -21,7 +21,7 @@ class SiteSettings(models.Model):
     linkedin_url = models.URLField(blank=True)
     whatsapp_number = models.CharField(max_length=20, blank=True)
     google_maps_embed = models.TextField(blank=True)
-    meta_description = models.TextField(blank=True, default='ZB Lands and Home - Premium Real Estate in Nigeria')
+    meta_description = models.TextField(blank=True, default='Lands and Houses - Premium Real Estate in Nigeria')
 
     class Meta:
         verbose_name = 'Site Settings'

@@ -1,5 +1,5 @@
 ﻿"""
-Accounts app URL patterns - ZB Lands and Home
+Accounts app URL patterns - Lands and Houses
 Web-facing authentication and profile URLs.
 """
 from django.urls import path

@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Login — ZB Lands and Home{% endblock %}
+{% block title %}Login — Lands and Houses{% endblock %}
 
 {% block content %}
 <div class="auth-page">
@@ -12,7 +12,7 @@
           <div class="auth-logo">
             <div class="brand-icon mx-auto mb-3"><i class="bi bi-buildings-fill" style="font-size:1.5rem"></i></div>
             <h2 class="auth-title">Welcome Back</h2>
-            <p class="auth-subtitle">Sign in to your ZB Lands and Home account</p>
+            <p class="auth-subtitle">Sign in to your Lands and Houses account</p>
           </div>
 
           <form method="POST" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">

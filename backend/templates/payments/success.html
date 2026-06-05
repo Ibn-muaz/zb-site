@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Payment Successful — ZB Lands and Home{% endblock %}
+{% block title %}Payment Successful — Lands and Houses{% endblock %}
 
 {% block content %}
 <section style="min-height: 100vh; padding: 120px 0 60px; display:flex; align-items:center; background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%); position:relative; overflow:hidden;">
@@ -20,16 +20,16 @@
           </div>
 
           <h2 class="font-heading mb-2">Payment <span class="text-success">Successful!</span></h2>
-          <p class="text-muted mb-4">Your payment has been processed successfully. Thank you for choosing ZB Lands & Home. A confirmation will be sent to your email address.</p>
+          <p class="text-muted mb-4">Your payment has been processed successfully. Thank you for choosing Lands & Houses. A confirmation will be sent to your email address.</p>
 
           <!-- Payment Details -->
           {% if payment %}
           <div class="glass-card p-3 mb-4 text-start" style="border-left:3px solid #198754;">
             <div class="row g-2">
-              {% if payment.reference %}
+              {% if payment.stripe_payment_intent_id %}
               <div class="col-6">
                 <div class="small text-muted">Reference</div>
-                <div class="fw-600 small">{{ payment.reference }}</div>
+                <div class="fw-600 small">{{ payment.stripe_payment_intent_id }}</div>
               </div>
               {% endif %}
               {% if payment.amount %}
@@ -41,7 +41,7 @@
               {% if payment.property %}
               <div class="col-12">
                 <div class="small text-muted">Property</div>
-                <div class="fw-600 small">{{ payment.property.title }}</div>
+                <div class="fw-600 small">{{ payment.listing.title }}</div>
               </div>
               {% endif %}
             </div>

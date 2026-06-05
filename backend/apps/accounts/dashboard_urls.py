@@ -1,5 +1,5 @@
 """
-User dashboard URL patterns - ZB Lands and Home
+User dashboard URL patterns - Lands and Houses
 Mounted at /dashboard/ in the root URL conf.
 """
 from django.urls import path

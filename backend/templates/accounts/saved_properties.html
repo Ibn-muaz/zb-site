@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Saved Properties — ZB Lands and Home{% endblock %}
+{% block title %}Saved Properties — Lands and Houses{% endblock %}
 
 {% block content %}
 <div class="container py-5" style="padding-top: 120px !important;">
@@ -42,12 +42,12 @@
             <!-- Property Image Placeholder -->
             <div style="height:160px;background:linear-gradient(135deg,var(--bg-secondary),var(--bg-primary));display:flex;align-items:center;justify-content:center;position:relative;">
               {% if saved.property.featured_image %}
-              <img src="{{ saved.property.featured_image.url }}" alt="{{ saved.property.title }}" class="w-100 h-100" style="object-fit:cover;" />
+              <img src="{{ saved.property.featured_image.url }}" alt="{{ saved.listing.title }}" class="w-100 h-100" style="object-fit:cover;" />
               {% else %}
               <i class="bi bi-building" style="font-size:3rem;opacity:.2;"></i>
               {% endif %}
               <!-- Remove button -->
-              <form method="POST" action="{% url 'save-property' saved.property.slug %}" style="position:absolute;top:10px;right:10px;">
+              <form method="POST" action="{% url 'save-property' saved.listing.slug %}" style="position:absolute;top:10px;right:10px;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm" style="background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;" title="Remove from saved">
                   <i class="bi bi-heart-fill text-gold"></i>
@@ -55,11 +55,11 @@
               </form>
             </div>
             <div class="p-3">
-              <h6 class="font-heading mb-1">{{ saved.property.title|truncatechars:45 }}</h6>
-              <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-gold"></i>{{ saved.property.city }}</p>
+              <h6 class="font-heading mb-1">{{ saved.listing.title|truncatechars:45 }}</h6>
+              <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1 text-gold"></i>{{ saved.listing.city }}</p>
               <div class="d-flex align-items-center justify-content-between">
-                <span class="text-gold fw-bold">₦{{ saved.property.price|floatformat:0|intcomma }}</span>
-                <a href="{% url 'property-detail' saved.property.slug %}" class="btn btn-gold btn-sm">View</a>
+                <span class="text-gold fw-bold">₦{{ saved.listing.price|floatformat:0|intcomma }}</span>
+                <a href="{% url 'property-detail' saved.listing.slug %}" class="btn btn-gold btn-sm">View</a>
               </div>
             </div>
           </div>

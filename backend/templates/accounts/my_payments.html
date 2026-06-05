@@ -1,7 +1,7 @@
 ﻿{% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Payment History — ZB Lands and Home{% endblock %}
+{% block title %}Payment History — Lands and Houses{% endblock %}
 
 {% block content %}
 <div class="container py-5" style="padding-top: 120px !important;">
@@ -63,10 +63,10 @@
           <tbody>
             {% for pmt in payments %}
             <tr>
-              <td class="fw-600">{{ pmt.property.title|truncatechars:35 }}</td>
+              <td class="fw-600">{{ pmt.listing.title|truncatechars:35 }}</td>
               <td class="text-gold fw-600">₦{{ pmt.amount|floatformat:0|intcomma }}</td>
               <td>
-                <code style="font-size:.8rem;color:var(--text-muted);">{{ pmt.reference|truncatechars:18 }}</code>
+                <code style="font-size:.8rem;color:var(--text-muted);">{{ pmt.stripe_payment_intent_id|truncatechars:18 }}</code>
               </td>
               <td>
                 <span class="status-pill status-{{ pmt.status }}">

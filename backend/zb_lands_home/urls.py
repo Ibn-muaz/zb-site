@@ -1,4 +1,4 @@
-"""ZB Lands and Home - URL Configuration"""
+"""Lands and Houses - URL Configuration"""
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -9,9 +9,9 @@ from rest_framework.permissions import AllowAny
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="ZB Lands and Home API",
+        title="Lands and Houses API",
         default_version='v1',
-        description="RESTful API for ZB Lands and Home Real Estate Platform",
+        description="RESTful API for Lands and Houses Real Estate Platform",
         terms_of_service="https://ZBLandsAndHome.com/terms/",
         contact=openapi.Contact(email="admin@ZBLandsAndHome.com"),
         license=openapi.License(name="Proprietary"),

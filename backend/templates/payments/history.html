@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Payment History — Lands and Houses{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <div class="section-badge"><i class="bi bi-wallet2"></i>Payments</div>
+      <h1 class="section-title mb-0">Payment <span class="accent">History</span></h1>
+    </div>
+    <a href="{% url 'dashboard:home' %}" class="btn btn-gold-outline btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
+
+  {% if payments %}
+  <div class="glass-card p-0 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-dark mb-0" style="border-color:var(--border)">
+        <thead style="background:rgba(201,168,76,.08)">
+          <tr>
+            <th class="px-4 py-3 text-muted small fw-600">PROPERTY</th>
+            <th class="px-4 py-3 text-muted small fw-600">TYPE</th>
+            <th class="px-4 py-3 text-muted small fw-600">AMOUNT</th>
+            <th class="px-4 py-3 text-muted small fw-600">STATUS</th>
+            <th class="px-4 py-3 text-muted small fw-600">DATE</th>
+            <th class="px-4 py-3 text-muted small fw-600">REFERENCE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pmt in payments %}
+          <tr style="border-color:var(--border)">
+            <td class="px-4 py-3">
+              {% if pmt.property %}
+                <a href="{% url 'property-detail' pmt.property.slug %}" class="text-white fw-600 text-decoration-none">
+                  {{ pmt.property.title|truncatechars:35 }}
+                </a>
+                <div class="text-muted small"><i class="bi bi-geo-alt me-1"></i>{{ pmt.property.city }}</div>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge" style="background:rgba(201,168,76,.15);color:var(--gold);font-size:.75rem">
+                {{ pmt.get_payment_type_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="fw-600 text-gold">₦{{ pmt.amount|intcomma }}</span>
+            </td>
+            <td class="px-4 py-3">
+              {% if pmt.status == 'completed' %}
+                <span class="badge bg-success">Completed</span>
+              {% elif pmt.status == 'pending' %}
+                <span class="badge bg-warning text-dark">Pending</span>
+              {% elif pmt.status == 'failed' %}
+                <span class="badge bg-danger">Failed</span>
+              {% elif pmt.status == 'refunded' %}
+                <span class="badge bg-info">Refunded</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ pmt.status|title }}</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-muted small">{{ pmt.created_at|date:"M d, Y" }}</td>
+            <td class="px-4 py-3">
+              <code style="font-size:.75rem;color:var(--text-muted)">
+                {{ pmt.stripe_payment_intent_id|truncatechars:20|default:"—" }}
+              </code>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="glass-card text-center py-5">
+    <i class="bi bi-wallet2" style="font-size:3rem;opacity:.3;color:var(--gold)"></i>
+    <h5 class="mt-3 font-heading">No payments yet</h5>
+    <p class="text-muted">Your payment history will appear here once you complete a transaction.</p>
+    <a href="{% url 'property-list' %}" class="btn btn-gold mt-2">
+      <i class="bi bi-buildings me-2"></i>Browse Properties
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

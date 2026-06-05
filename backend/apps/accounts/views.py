@@ -1,5 +1,5 @@
-﻿"""
-Accounts app views - ZB Lands and Home
+"""
+Accounts app views - Lands and Houses
 Class-based views (DRF APIView + Django TemplateView) for authentication,
 profile management, and user/admin dashboards.
 """
@@ -563,7 +563,7 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
 
         recent_users = CustomUser.objects.order_by('-date_joined')[:5]
         recent_negotiations = (
-            Negotiation.objects.select_related('user', 'property').order_by(
+            Negotiation.objects.select_related('user', 'listing').order_by(
                 '-created_at'
             )[:5]
         )
@@ -717,7 +717,7 @@ class AdminNegotiationListView(AdminRequiredMixin, TemplateView):
         from apps.negotiations.models import Negotiation
 
         negotiations = (
-            Negotiation.objects.select_related('user', 'property', 'admin')
+            Negotiation.objects.select_related('user', 'listing', 'handled_by')
             .order_by('-created_at')
         )
         status_filter = self.request.GET.get('status', '')
@@ -744,12 +744,12 @@ class AdminNegotiationDetailView(AdminRequiredMixin, TemplateView):
         from apps.negotiations.models import Negotiation
 
         negotiation = get_object_or_404(
-            Negotiation.objects.select_related('user', 'property', 'admin').prefetch_related('messages'),
+            Negotiation.objects.select_related('user', 'listing', 'handled_by').prefetch_related('messages'),
             id=kwargs.get('negotiation_id'),
         )
         ctx.update(
             {
-                'page_title': f'Negotiation – {negotiation.property.title}',
+                'page_title': f'Negotiation – {negotiation.listing.title}',
                 'negotiation': negotiation,
             }
         )
@@ -882,8 +882,8 @@ class UserNegotiationsView(LoginRequiredMixin, TemplateView):
 
         negotiations = (
             Negotiation.objects.filter(user=self.request.user)
-            .select_related('property')
-            .prefetch_related('property__images', 'messages')
+            .select_related('listing')
+            .prefetch_related('listing__images', 'messages')
             .order_by('-created_at')
         )
         ctx.update({'page_title': 'My Negotiations', 'negotiations': negotiations})

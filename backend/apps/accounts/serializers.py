@@ -1,5 +1,5 @@
 ﻿"""
-Accounts app serializers - ZB Lands and Home
+Accounts app serializers - Lands and Houses
 Handles user registration, authentication, profile, and password management.
 """
 import uuid
@@ -143,7 +143,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             context = {
                 'user': user,
                 'verify_url': verify_url,
-                'site_name': 'ZB Lands and Home',
+                'site_name': 'Lands and Houses',
             }
 
             # Try to render HTML template; fall back to plain text if template missing.
@@ -155,16 +155,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             except Exception:
                 plain_message = (
                     f"Hi {user.first_name},\n\n"
-                    f"Welcome to ZB Lands and Home!\n\n"
+                    f"Welcome to Lands and Houses!\n\n"
                     f"Please verify your email address by clicking the link below:\n"
                     f"{verify_url}\n\n"
                     f"If you did not register, please ignore this email.\n\n"
-                    f"Regards,\nZB Lands and Home Team"
+                    f"Regards,\nLands and Houses Team"
                 )
                 html_message = None
 
             send_mail(
-                subject='Verify Your Email – ZB Lands and Home',
+                subject='Verify Your Email – Lands and Houses',
                 message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
@@ -391,7 +391,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             context = {
                 'user': user,
                 'reset_url': reset_url,
-                'site_name': 'ZB Lands and Home',
+                'site_name': 'Lands and Houses',
                 'expiry_hours': 1,
             }
 
@@ -403,16 +403,16 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             except Exception:
                 plain_message = (
                     f"Hi {user.first_name},\n\n"
-                    f"You requested a password reset for your ZB Lands and Home account.\n\n"
+                    f"You requested a password reset for your Lands and Houses account.\n\n"
                     f"Click the link below to reset your password (valid for 1 hour):\n"
                     f"{reset_url}\n\n"
                     f"If you did not request this, please ignore this email.\n\n"
-                    f"Regards,\nZB Lands and Home Team"
+                    f"Regards,\nLands and Houses Team"
                 )
                 html_message = None
 
             send_mail(
-                subject='Password Reset Request – ZB Lands and Home',
+                subject='Password Reset Request – Lands and Houses',
                 message=plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],

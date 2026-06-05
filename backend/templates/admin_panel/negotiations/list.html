@@ -64,9 +64,9 @@
             {% for neg in negotiations %}
             <tr>
               <td class="text-muted small">{{ forloop.counter }}</td>
-              <td class="fw-600">{{ neg.property.title|truncatechars:30 }}</td>
+              <td class="fw-600">{{ neg.listing.title|truncatechars:30 }}</td>
               <td class="text-muted small">{{ neg.user.email }}</td>
-              <td class="text-gold fw-600">₦{{ neg.offered_price|floatformat:0|intcomma }}</td>
+              <td class="text-gold fw-600">₦{{ neg.current_offer|floatformat:0|intcomma }}</td>
               <td><span class="status-pill status-{{ neg.status }}">{{ neg.status|capfirst }}</span></td>
               <td class="text-muted small">{{ neg.created_at|date:"M d, Y" }}</td>
               <td class="text-center">

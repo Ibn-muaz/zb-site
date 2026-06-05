@@ -1,5 +1,5 @@
 ﻿"""
-Accounts app Django admin configuration - ZB Lands and Home
+Accounts app Django admin configuration - Lands and Houses
 Registers CustomUser and UserActivity with rich admin customisation.
 """
 from django.contrib import admin

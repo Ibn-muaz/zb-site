@@ -1,5 +1,5 @@
 """
-ZB Lands and Home — Comprehensive View & Route Unit Tests
+Lands and Houses — Comprehensive View & Route Unit Tests
 Covers all URL patterns, HTTP status codes, redirects,
 authentication guards, and critical business logic.
 """
@@ -39,7 +39,7 @@ def make_admin(email='admin@test.com', password='Adminpass123!'):
 
 
 def make_property(admin_user, title='Test Property', **kwargs):
-    return Property.objects.create(
+    defaults = dict(
         admin=admin_user,
         title=title,
         description='A fine test property.',
@@ -51,11 +51,12 @@ def make_property(admin_user, title='Test Property', **kwargs):
         city='Lagos',
         state='Lagos',
         country='Nigeria',
-        **kwargs,
     )
+    defaults.update(kwargs)
+    return Property.objects.create(**defaults)
 
 
-def make_blog_post(author, title='Test Blog Post', **kwargs):
+def make_blog_post(author, title='Test Blog Post', is_published=True, **kwargs):
     import re
     slug = re.sub(r'\s+', '-', title.lower()) + f'-{uuid.uuid4().hex[:6]}'
     return BlogPost.objects.create(
@@ -64,7 +65,7 @@ def make_blog_post(author, title='Test Blog Post', **kwargs):
         slug=slug,
         excerpt='A test excerpt.',
         content='Full test content.',
-        is_published=True,
+        is_published=is_published,
         **kwargs,
     )
 
@@ -786,7 +787,7 @@ class SiteSettingsModelTests(TestCase):
     def test_get_settings_creates_default(self):
         settings = SiteSettings.get_settings()
         self.assertIsNotNone(settings)
-        self.assertEqual(settings.company_name, 'ZB Lands and Home')
+        self.assertEqual(settings.company_name, 'Lands and Houses')
 
     def test_get_settings_singleton(self):
         s1 = SiteSettings.get_settings()
