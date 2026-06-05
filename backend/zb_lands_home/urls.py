@@ -20,7 +20,13 @@ schema_view = get_schema_view(
     permission_classes=[AllowAny],
 )
 
+from django.http import HttpResponse
+
+def health_check(request):
+    return HttpResponse("OK")
+
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
 
     # Web pages
