@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Lands and Houses{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="font-heading mb-0">My Profile</h2>
+      <p class="text-muted">Manage your account details and security settings.</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="card glass-card border-0 h-100">
+        <div class="card-body text-center p-4">
+          <div class="position-relative d-inline-block mb-3">
+            {% if request.user.avatar %}
+              <img src="{{ request.user.avatar.url }}" alt="Avatar" class="rounded-circle shadow-sm" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid var(--border);">
+            {% else %}
+              <div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: var(--navy); font-size: 3rem; font-weight: bold; border: 4px solid var(--border);">
+                {{ request.user.first_name|first|default:"U" }}
+              </div>
+            {% endif %}
+          </div>
+          <h4 class="mb-1">{{ request.user.get_full_name }}</h4>
+          <p class="text-muted small mb-3">{{ request.user.email }}</p>
+          
+          <div class="d-flex justify-content-center gap-2 mb-3">
+            {% if request.user.is_agent %}
+              <span class="badge bg-gold text-navy px-3 py-2"><i class="bi bi-briefcase-fill me-1"></i> Agent</span>
+            {% elif request.user.is_admin %}
+              <span class="badge bg-danger text-white px-3 py-2"><i class="bi bi-shield-lock-fill me-1"></i> Admin</span>
+            {% else %}
+              <span class="badge bg-info text-navy px-3 py-2"><i class="bi bi-person-fill me-1"></i> User</span>
+            {% endif %}
+          </div>
+
+          <hr class="my-4" style="border-color: var(--border);">
+
+          <ul class="list-unstyled text-start m-0">
+            <li class="mb-3 d-flex align-items-center">
+              <i class="bi bi-telephone-fill text-gold me-3 fs-5"></i>
+              <div>
+                <small class="text-muted d-block">Phone Number</small>
+                <span>{{ request.user.phone_number|default:"Not provided" }}</span>
+              </div>
+            </li>
+            <li class="d-flex align-items-center">
+              <i class="bi bi-calendar-check-fill text-gold me-3 fs-5"></i>
+              <div>
+                <small class="text-muted d-block">Joined Date</small>
+                <span>{{ request.user.date_joined|date:"M d, Y" }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forms -->
+    <div class="col-lg-8">
+      <!-- Profile Update Form -->
+      <div class="card glass-card border-0 mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+          <h5 class="mb-0 font-heading"><i class="bi bi-person-lines-fill text-gold me-2"></i>Personal Information</h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{% url 'profile' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if profile_errors %}
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                {% for field, error_list in profile_errors.items %}
+                  {% for error in error_list %}
+                    <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">First Name</label>
+                <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address (Cannot be changed)</label>
+                <input type="email" class="form-control" value="{{ request.user.email }}" readonly disabled>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number</label>
+                <input type="text" name="phone_number" class="form-control" value="{{ request.user.phone_number|default:'' }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Profile Avatar</label>
+                <input type="file" name="avatar" class="form-control" accept="image/*">
+              </div>
+              <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn btn-gold"><i class="bi bi-save me-2"></i>Save Changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Password Change Form -->
+      <div class="card glass-card border-0">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+          <h5 class="mb-0 font-heading"><i class="bi bi-shield-lock text-gold me-2"></i>Change Password</h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{% url 'change-password' %}">
+            {% csrf_token %}
+            
+            {% if password_errors %}
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                {% for field, error_list in password_errors.items %}
+                  {% for error in error_list %}
+                    <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Current Password</label>
+                <input type="password" name="old_password" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">New Password</label>
+                <input type="password" name="new_password" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" name="new_password_confirm" class="form-control" required>
+              </div>
+              <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn btn-gold-outline"><i class="bi bi-key me-2"></i>Update Password</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

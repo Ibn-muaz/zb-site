@@ -8,7 +8,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -171,37 +171,32 @@ class LoginView(TemplateView):
 # LogoutView
 # ---------------------------------------------------------------------------
 
-class LogoutView(APIView):
+class LogoutView(View):
     """
-    POST → blacklists the refresh token, clears Django session.
-    Works for both JWT-only and session-based flows.
+    GET / POST -> logs out the user, clears session, and redirects to home.
     """
 
-    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        return self._logout(request)
 
     def post(self, request, *args, **kwargs):
-        ip = _get_client_ip(request)
+        return self._logout(request)
 
-        # Blacklist the JWT refresh token if provided
-        refresh_token = request.data.get('refresh')
-        if refresh_token:
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            except TokenError as exc:
-                logger.debug('Logout token blacklist skipped: %s', exc)
+    def _logout(self, request):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        
+        ip = _get_client_ip(request)
 
         # Log activity before clearing session
         if request.user and request.user.is_authenticated:
             _log_activity(request.user, 'logout', f'Logout from IP {ip}', ip)
+            messages.success(request, 'You have been successfully logged out.')
 
         # Clear Django session
         auth_logout(request)
 
-        return Response(
-            {'message': 'You have been successfully logged out.'},
-            status=status.HTTP_200_OK,
-        )
+        return redirect('home')
 
 
 # ---------------------------------------------------------------------------
@@ -269,15 +264,12 @@ class EmailVerifyView(APIView):
 # PasswordResetRequestView
 # ---------------------------------------------------------------------------
 
-class PasswordResetRequestView(APIView):
+class PasswordResetRequestView(View):
     """
     POST /accounts/password-reset/
     Accepts an email, generates a reset token, and sends a reset email.
-    Always returns 200 to prevent user enumeration.
+    Always returns 200/success to prevent user enumeration.
     """
-
-    permission_classes = [AllowAny]
-    throttle_scope = 'anon'
 
     def get(self, request, *args, **kwargs):
         """Render the password-reset request template (for TemplateView mixin)."""
@@ -285,32 +277,35 @@ class PasswordResetRequestView(APIView):
         return render(request, 'accounts/password_reset.html', {'page_title': 'Reset Password'})
 
     def post(self, request, *args, **kwargs):
-        serializer = PasswordResetRequestSerializer(data=request.data)
+        from django.shortcuts import render
+        from django.contrib import messages
+        
+        serializer = PasswordResetRequestSerializer(data=request.POST)
         if serializer.is_valid():
             serializer.save()
-            return Response(
-                {
-                    'message': (
-                        'If an account with that email exists, '
-                        'a password-reset link has been sent.'
-                    )
-                },
-                status=status.HTTP_200_OK,
+            messages.success(
+                request,
+                'If an account with that email exists, a password-reset link has been sent.'
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # We don't want to expose if the email exists, but if there's a validation error 
+            # like invalid email format, we can show it.
+            for field, errors in serializer.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+            
+        return render(request, 'accounts/password_reset.html', {'page_title': 'Reset Password'})
 
 
 # ---------------------------------------------------------------------------
 # PasswordResetConfirmView
 # ---------------------------------------------------------------------------
 
-class PasswordResetConfirmView(APIView):
+class PasswordResetConfirmView(View):
     """
-    GET  /accounts/password-reset/confirm/<token>/  → renders confirm page.
-    POST /accounts/password-reset/confirm/<token>/  → sets the new password.
+    GET  /accounts/password-reset/confirm/<token>/  -> renders confirm page.
+    POST /accounts/password-reset/confirm/<token>/  -> sets the new password.
     """
-
-    permission_classes = [AllowAny]
 
     def get(self, request, token, *args, **kwargs):
         from django.shortcuts import render
@@ -337,99 +332,116 @@ class PasswordResetConfirmView(APIView):
         )
 
     def post(self, request, token, *args, **kwargs):
-        data = request.data.copy()
+        from django.shortcuts import render, redirect
+        from django.contrib import messages
+        
+        data = request.POST.copy()
         data['token'] = token
         serializer = PasswordResetConfirmSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
             ip = _get_client_ip(request)
             _log_activity(user, 'login', 'Password reset completed', ip)
-            return Response(
-                {'message': 'Your password has been reset successfully. You can now log in.'},
-                status=status.HTTP_200_OK,
+            messages.success(request, 'Your password has been reset successfully. You can now log in.')
+            return redirect('login')
+            
+        # Re-verify token to pass to template
+        try:
+            user = CustomUser.objects.get(
+                password_reset_token=token, is_active=True
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            token_valid = (
+                user.password_reset_expiry is None
+                or user.password_reset_expiry >= timezone.now()
+            )
+        except CustomUser.DoesNotExist:
+            token_valid = False
+            
+        ctx = {
+            'page_title': 'Set New Password',
+            'token': token,
+            'token_valid': token_valid,
+            'password_errors': serializer.errors
+        }
+        return render(request, 'accounts/password_reset_confirm.html', ctx)
 
 
 # ---------------------------------------------------------------------------
 # ProfileView
 # ---------------------------------------------------------------------------
 
-class ProfileView(APIView):
+class ProfileView(LoginRequiredMixin, TemplateView):
     """
-    GET    /accounts/profile/  → returns the authenticated user's full profile.
-    PUT    /accounts/profile/  → full update of profile fields.
-    PATCH  /accounts/profile/  → partial update (e.g. avatar upload).
+    GET    /accounts/profile/  -> renders the user profile and change password forms.
+    POST   /accounts/profile/  -> processes profile update form.
     """
 
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    template_name = 'accounts/profile.html'
 
-    def get(self, request, *args, **kwargs):
-        serializer = UserProfileSerializer(
-            request.user, context={'request': request}
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = 'My Profile'
+        return ctx
 
-    def put(self, request, *args, **kwargs):
-        return self._update(request, partial=False)
+    def post(self, request, *args, **kwargs):
+        from django.shortcuts import render, redirect
+        from django.contrib import messages
 
-    def patch(self, request, *args, **kwargs):
-        return self._update(request, partial=True)
-
-    def _update(self, request, partial):
         serializer = UserProfileSerializer(
             request.user,
-            data=request.data,
-            partial=partial,
+            data=request.POST,
+            partial=True,
             context={'request': request},
         )
         if serializer.is_valid():
+            # Update avatar manually if present
+            if 'avatar' in request.FILES:
+                request.user.avatar = request.FILES['avatar']
             serializer.save()
-            return Response(
-                {
-                    'message': 'Profile updated successfully.',
-                    'user': serializer.data,
-                },
-                status=status.HTTP_200_OK,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile')
+
+        ctx = self.get_context_data()
+        ctx['profile_errors'] = serializer.errors
+        return render(request, self.template_name, ctx)
 
 
 # ---------------------------------------------------------------------------
 # ChangePasswordView
 # ---------------------------------------------------------------------------
 
-class ChangePasswordView(APIView):
+class ChangePasswordView(LoginRequiredMixin, TemplateView):
     """
     POST /accounts/change-password/
     Validates old password, then sets the new password.
-    Rotates JWT tokens so the old access token is invalidated.
+    Redirects back to profile.
     """
 
-    permission_classes = [IsAuthenticated]
+    template_name = 'accounts/profile.html'
 
     def post(self, request, *args, **kwargs):
+        from django.shortcuts import render, redirect
+        from django.contrib import messages
+        
         serializer = ChangePasswordSerializer(
-            data=request.data, context={'request': request}
+            data=request.POST, context={'request': request}
         )
         if serializer.is_valid():
             serializer.save()
 
-            # Issue fresh JWT tokens so the client doesn't get kicked out
-            tokens = _get_tokens_for_user(request.user)
+            # Keep user logged in after password change
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+
             ip = _get_client_ip(request)
-            _log_activity(
-                request.user, 'login', 'Password changed by user', ip
-            )
-            return Response(
-                {
-                    'message': 'Password changed successfully.',
-                    'tokens': tokens,
-                },
-                status=status.HTTP_200_OK,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            _log_activity(request.user, 'login', 'Password changed by user', ip)
+            messages.success(request, 'Password changed successfully.')
+            return redirect('profile')
+
+        ctx = self.get_context_data()
+        ctx['password_errors'] = serializer.errors
+        ctx['page_title'] = 'My Profile'
+        return render(request, self.template_name, ctx)
 
 
 # ---------------------------------------------------------------------------
