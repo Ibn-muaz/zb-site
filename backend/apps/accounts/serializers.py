@@ -215,17 +215,17 @@ class UserLoginSerializer(serializers.Serializer):
         )
 
         if user is None:
-            raise AuthenticationFailed(
+            raise serializers.ValidationError(
                 'Invalid email or password. Please check your credentials.'
             )
 
         if user.is_suspended:
-            raise AuthenticationFailed(
+            raise serializers.ValidationError(
                 'Your account has been suspended. Please contact support.'
             )
 
         if not user.is_active:
-            raise AuthenticationFailed(
+            raise serializers.ValidationError(
                 'Your account is inactive. Please contact support.'
             )
 

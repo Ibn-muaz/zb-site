@@ -16,7 +16,7 @@
   --white: #FFFFFF;
   --off-white: #F8F5EE;
   --text-primary: #E8E4DA;
-  --text-muted: #8A96A8;
+  --text-muted: #AAB4C4;
   --border: rgba(201,168,76,0.2);
   --glass-bg: rgba(15, 32, 64, 0.7);
   --glass-border: rgba(201, 168, 76, 0.15);
@@ -47,6 +47,10 @@
   --card-border: rgba(201,168,76,0.18);
   --shadow: 0 4px 24px rgba(0,0,0,0.1);
 }
+
+/* ── Utility Overrides ── */
+.text-muted { color: var(--text-muted) !important; }
+.text-primary { color: var(--text-primary) !important; }
 
 /* ── Base ── */
 *, *::before, *::after { box-sizing: border-box; }
