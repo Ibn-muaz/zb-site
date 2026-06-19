@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static humanize %}
 
 {% block title %}Admin Dashboard — Lands and Houses{% endblock %}
@@ -36,6 +36,20 @@
         <h3 class="font-heading mb-0">Admin <span class="text-gold">Dashboard</span></h3>
         <div class="text-muted small">Last updated: <span id="lastUpdated"></span></div>
       </div>
+
+      <!-- Unverified Agent Banner -->
+      {% if user.is_agent and not user.is_verified %}
+      <div class="alert mb-4 d-flex align-items-center justify-content-between" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-shield-lock-fill text-danger fs-3"></i>
+          <div>
+            <h5 class="text-danger mb-1 font-heading">Account Verification Required</h5>
+            <p class="mb-0 text-muted small">You must pay the ₦5,000 verification fee before you can list properties.</p>
+          </div>
+        </div>
+        <a href="{% url 'payment-checkout-general' %}?type=verification_fee" class="btn btn-danger px-4">Pay Verification Fee</a>
+      </div>
+      {% endif %}
 
       <!-- KPI Cards -->
       <div class="row g-3 mb-4">

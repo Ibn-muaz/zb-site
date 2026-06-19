@@ -9,6 +9,7 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('super_admin', 'Super Admin'),
         ('admin', 'Admin'),
+        ('agent', 'Agent'),
         ('user', 'User'),
     ]
 
@@ -39,6 +40,10 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.role in ['admin', 'super_admin']
+
+    @property
+    def is_agent(self):
+        return self.role == 'agent'
 
     @property
     def is_super_admin(self):

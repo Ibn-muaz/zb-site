@@ -28,25 +28,33 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class PaymentCheckoutView(View):
     template_name = 'payments/checkout.html'
 
-    def get(self, request, property_id):
-        prop = get_object_or_404(Property, id=property_id, is_active=True)
+    def get(self, request, property_id=None):
         payment_type = request.GET.get('type', 'booking_fee')
-        negotiation_id = request.GET.get('negotiation', None)
-        negotiation = None
-        if negotiation_id:
-            try:
-                negotiation = Negotiation.objects.get(id=negotiation_id, user=request.user)
-            except Negotiation.DoesNotExist:
-                pass
+        
+        if payment_type == 'verification_fee':
+            prop = None
+            negotiation = None
+            amount = 5000
+        else:
+            if not property_id:
+                messages.error(request, 'Property ID is required for this payment.')
+                return redirect('home')
+            prop = get_object_or_404(Property, id=property_id, is_active=True)
+            negotiation_id = request.GET.get('negotiation', None)
+            negotiation = None
+            if negotiation_id:
+                try:
+                    negotiation = Negotiation.objects.get(id=negotiation_id, user=request.user)
+                except Negotiation.DoesNotExist:
+                    pass
 
-        # Determine amount based on type
-        amounts = {
-            'booking_fee': min(float(prop.price) * 0.01, 500000),  # 1% or max 500k
-            'inspection_fee': 15000,
-            'agency_fee': float(prop.price) * 0.05,
-            'deposit': float(prop.price) * 0.10,
-        }
-        amount = amounts.get(payment_type, 50000)
+            amounts = {
+                'booking_fee': min(float(prop.price) * 0.01, 500000),  # 1% or max 500k
+                'inspection_fee': 15000,
+                'agency_fee': float(prop.price) * 0.05,
+                'deposit': float(prop.price) * 0.10,
+            }
+            amount = amounts.get(payment_type, 50000)
 
         ctx = {
             'property': prop,
@@ -68,28 +76,45 @@ class CreatePaymentIntentView(APIView):
         amount = request.data.get('amount')
         negotiation_id = request.data.get('negotiation_id')
 
-        if not property_id or not amount:
-            return Response({'error': 'property_id and amount required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if payment_type == 'verification_fee':
+            if not amount:
+                return Response({'error': 'amount required.'}, status=status.HTTP_400_BAD_REQUEST)
+            prop = None
+            negotiation = None
+            description = 'Agent Verification Fee'
+            metadata = {
+                'user_id': str(request.user.id),
+                'payment_type': payment_type,
+            }
+        else:
+            if not property_id or not amount:
+                return Response({'error': 'property_id and amount required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            prop = Property.objects.get(id=property_id)
+            try:
+                prop = Property.objects.get(id=property_id)
+            except Property.DoesNotExist:
+                return Response({'error': 'Property not found.'}, status=status.HTTP_404_NOT_FOUND)
+                
             negotiation = None
             if negotiation_id:
                 try:
                     negotiation = Negotiation.objects.get(id=negotiation_id, user=request.user)
                 except Negotiation.DoesNotExist:
                     pass
+            description = f'{payment_type.replace("_", " ").title()} for {prop.title}'
+            metadata = {
+                'user_id': str(request.user.id),
+                'property_id': str(prop.id),
+                'payment_type': payment_type,
+            }
 
+        try:
             amount_kobo = int(float(amount) * 100)  # Stripe uses smallest unit
 
             intent = stripe.PaymentIntent.create(
                 amount=amount_kobo,
                 currency='ngn',
-                metadata={
-                    'user_id': str(request.user.id),
-                    'property_id': str(prop.id),
-                    'payment_type': payment_type,
-                }
+                metadata=metadata
             )
 
             payment = Payment.objects.create(
@@ -101,7 +126,7 @@ class CreatePaymentIntentView(APIView):
                 currency='NGN',
                 stripe_payment_intent_id=intent.id,
                 stripe_client_secret=intent.client_secret,
-                description=f'{payment_type.replace("_", " ").title()} for {prop.title}',
+                description=description,
             )
 
             return Response({
@@ -128,6 +153,12 @@ class PaymentSuccessView(TemplateView):
                     payment.status = 'completed'
                     payment.completed_at = timezone.now()
                     payment.save()
+
+                    if payment.payment_type == 'verification_fee':
+                        user = payment.user
+                        user.is_verified = True
+                        user.save(update_fields=['is_verified'])
+
             except Payment.DoesNotExist:
                 pass
         return render(request, self.template_name, {'payment': payment})
@@ -159,12 +190,23 @@ class StripeWebhookView(View):
                 payment.status = 'completed'
                 payment.completed_at = timezone.now()
                 payment.save()
+
+                if payment.payment_type == 'verification_fee':
+                    user = payment.user
+                    user.is_verified = True
+                    user.save(update_fields=['is_verified'])
+                    title = 'Verification Successful'
+                    message = 'You have successfully paid your verification fee and are now a verified agent.'
+                else:
+                    title = 'Payment Successful!'
+                    message = f'Your payment of ₦{payment.amount:,.0f} for {payment.property.title} was successful.'
+
                 from apps.notifications.views import create_notification
                 create_notification(
                     user=payment.user,
                     notification_type='payment_success',
-                    title='Payment Successful!',
-                    message=f'Your payment of ₦{payment.amount:,.0f} for {payment.property.title} was successful.',
+                    title=title,
+                    message=message,
                     link='/dashboard/payments/',
                 )
             except Payment.DoesNotExist:

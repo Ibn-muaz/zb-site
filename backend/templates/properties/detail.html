@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static humanize %}
 
 {% block title %}{{ property.title }} — Lands and Houses{% endblock %}
@@ -118,6 +118,16 @@
         <a href="{{ property.virtual_tour_url }}" target="_blank" class="btn btn-gold-outline">
           <i class="bi bi-badge-vr me-2"></i>View 360° Virtual Tour
         </a>
+      </div>
+      {% endif %}
+
+      <!-- Property Video -->
+      {% if property.video_url %}
+      <div class="glass-card p-4 mb-4">
+        <h4 class="font-heading text-gold mb-3"><i class="bi bi-play-circle me-2"></i>Property Video</h4>
+        <div class="ratio ratio-16x9" style="border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+          <iframe src="{{ property.video_url }}" title="Property Video" allowfullscreen></iframe>
+        </div>
       </div>
       {% endif %}
 

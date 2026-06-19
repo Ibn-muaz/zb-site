@@ -101,8 +101,8 @@ class ComparePropertiesView(TemplateView):
 
 # ──────────────────────── ADMIN PROPERTY VIEWS ────────────────────────
 
-def admin_required_redirect(request):
-    return not request.user.is_authenticated or not request.user.is_admin
+def admin_or_agent_required_redirect(request):
+    return not request.user.is_authenticated or not (request.user.is_admin or request.user.is_agent)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -110,7 +110,7 @@ class AdminPropertyListView(TemplateView):
     template_name = 'admin_panel/properties.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if admin_required_redirect(request):
+        if admin_or_agent_required_redirect(request):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
@@ -119,6 +119,10 @@ class AdminPropertyListView(TemplateView):
         q = self.request.GET.get('q', '')
         status_f = self.request.GET.get('status', '')
         qs = Property.objects.prefetch_related('images')
+        
+        if self.request.user.is_agent:
+            qs = qs.filter(admin=self.request.user)
+            
         if q:
             qs = qs.filter(title__icontains=q)
         if status_f:
@@ -135,7 +139,7 @@ class AdminPropertyCreateView(View):
     template_name = 'admin_panel/property_form.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if admin_required_redirect(request):
+        if admin_or_agent_required_redirect(request):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
@@ -165,6 +169,11 @@ class AdminPropertyCreateView(View):
                 if not PropertyImage.objects.filter(property=prop, is_primary=True).exclude(pk=pi.pk).exists():
                     pi.is_primary = True
                     pi.save()
+                    
+            # Parse YouTube URLs for Embed (optional step but good for robustness)
+            if prop.video_url and 'watch?v=' in prop.video_url:
+                prop.video_url = prop.video_url.replace('watch?v=', 'embed/')
+                prop.save()
             messages.success(request, f'Property "{prop.title}" created successfully.')
             return redirect('admin-properties')
         except Exception as e:
@@ -177,18 +186,24 @@ class AdminPropertyEditView(View):
     template_name = 'admin_panel/property_form.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if admin_required_redirect(request):
+        if admin_or_agent_required_redirect(request):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, slug):
         prop = get_object_or_404(Property, slug=slug)
+        if request.user.is_agent and prop.admin != request.user:
+            messages.error(request, 'You do not have permission to edit this property.')
+            return redirect('admin-properties')
         return render(request, self.template_name, {
             'property': prop, 'amenities': Amenity.objects.all(), 'action': 'Edit'
         })
 
     def post(self, request, slug):
         prop = get_object_or_404(Property, slug=slug)
+        if request.user.is_agent and prop.admin != request.user:
+            messages.error(request, 'You do not have permission to edit this property.')
+            return redirect('admin-properties')
         data = request.POST.dict()
         amenity_ids = request.POST.getlist('amenities')
         data.pop('csrfmiddlewaretoken', None)
@@ -204,6 +219,11 @@ class AdminPropertyEditView(View):
             prop.amenities.set(Amenity.objects.filter(id__in=amenity_ids))
             for img in request.FILES.getlist('images'):
                 PropertyImage.objects.create(property=prop, image=img)
+            
+            if prop.video_url and 'watch?v=' in prop.video_url:
+                prop.video_url = prop.video_url.replace('watch?v=', 'embed/')
+                prop.save()
+                
             messages.success(request, f'Property "{prop.title}" updated.')
             return redirect('admin-properties')
         except Exception as e:
@@ -216,12 +236,15 @@ class AdminPropertyEditView(View):
 @method_decorator(login_required, name='dispatch')
 class AdminPropertyDeleteView(View):
     def dispatch(self, request, *args, **kwargs):
-        if admin_required_redirect(request):
+        if admin_or_agent_required_redirect(request):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, slug):
         prop = get_object_or_404(Property, slug=slug)
+        if request.user.is_agent and prop.admin != request.user:
+            messages.error(request, 'You do not have permission to delete this property.')
+            return redirect('admin-properties')
         title = prop.title
         prop.delete()
         messages.success(request, f'Property "{title}" deleted.')

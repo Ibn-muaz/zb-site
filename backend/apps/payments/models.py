@@ -18,6 +18,7 @@ class Payment(models.Model):
         ('deposit', 'Deposit'),
         ('full_payment', 'Full Payment'),
         ('agency_fee', 'Agency Fee'),
+        ('verification_fee', 'Agent Verification Fee'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

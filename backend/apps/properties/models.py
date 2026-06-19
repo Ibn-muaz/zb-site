@@ -107,6 +107,15 @@ class Property(models.Model):
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+        
+        # Convert YouTube watch URLs to embed URLs
+        if self.video_url and 'youtube.com/watch?v=' in self.video_url:
+            video_id = self.video_url.split('v=')[1].split('&')[0]
+            self.video_url = f"https://www.youtube.com/embed/{video_id}"
+        elif self.video_url and 'youtu.be/' in self.video_url:
+            video_id = self.video_url.split('youtu.be/')[1].split('?')[0]
+            self.video_url = f"https://www.youtube.com/embed/{video_id}"
+
         super().save(*args, **kwargs)
 
     def __str__(self):

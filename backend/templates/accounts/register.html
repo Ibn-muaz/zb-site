@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Create Account — Lands and Houses{% endblock %}
@@ -46,6 +46,13 @@
                   <span class="input-group-text" style="background:rgba(255,255,255,.05);border-color:var(--border);color:var(--text-muted)"><i class="bi bi-phone"></i></span>
                   <input type="tel" name="phone" class="form-control" placeholder="+234 800 000 0000" value="{{ post_data.phone|default:'' }}" />
                 </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Account Type</label>
+                <select name="role" class="form-select" required style="background:var(--surface);border-color:var(--border);color:var(--text)">
+                  <option value="user" {% if post_data.role == 'user' %}selected{% endif %}>Standard User</option>
+                  <option value="agent" {% if post_data.role == 'agent' %}selected{% endif %}>Property Agent</option>
+                </select>
               </div>
               <div class="col-6">
                 <label class="form-label">Password</label>

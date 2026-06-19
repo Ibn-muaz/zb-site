@@ -152,6 +152,15 @@ class LoginView(TemplateView):
             ip = _get_client_ip(request)
             _log_activity(user, 'login', f'Login from IP {ip}', ip)
 
+            next_url = request.data.get('next')
+            if not next_url:
+                if user.is_admin:
+                    next_url = '/admin-panel/'
+                elif user.is_agent:
+                    next_url = '/admin-panel/properties/'
+                else:
+                    next_url = '/dashboard/'
+
             return Response(
                 {
                     'message': f'Welcome back, {user.first_name}!',
@@ -159,7 +168,7 @@ class LoginView(TemplateView):
                         user, context={'request': request}
                     ).data,
                     'tokens': tokens,
-                    'redirect': request.data.get('next') or '/dashboard/',
+                    'redirect': next_url,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -530,6 +539,19 @@ class AdminRequiredMixin(LoginRequiredMixin):
             return redirect('/')
         return super().dispatch(request, *args, **kwargs)
 
+class AdminOrAgentRequiredMixin(LoginRequiredMixin):
+    """Mixin that restricts access to admin or agent role users."""
+
+    login_url = '/accounts/login/'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_admin or request.user.is_agent):
+            messages.error(request, 'You do not have permission to access this area.')
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
 
 class AdminDashboardView(AdminRequiredMixin, TemplateView):
     """Main admin panel landing page with platform-wide analytics."""
@@ -579,7 +601,7 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
         return ctx
 
 
-class AdminPropertyListView(AdminRequiredMixin, TemplateView):
+class AdminPropertyListView(AdminOrAgentRequiredMixin, TemplateView):
     """Paginated list of all properties for admin management."""
 
     template_name = 'admin_panel/properties/list.html'
@@ -591,6 +613,9 @@ class AdminPropertyListView(AdminRequiredMixin, TemplateView):
         properties = Property.objects.select_related('admin').prefetch_related(
             'images'
         ).order_by('-created_at')
+
+        if self.request.user.is_agent:
+            properties = properties.filter(admin=self.request.user)
 
         # Simple search
         query = self.request.GET.get('q', '')
@@ -611,10 +636,17 @@ class AdminPropertyListView(AdminRequiredMixin, TemplateView):
         return ctx
 
 
-class AdminPropertyCreateView(AdminRequiredMixin, TemplateView):
+class AdminPropertyCreateView(AdminOrAgentRequiredMixin, TemplateView):
     """Render the property creation form."""
 
     template_name = 'admin_panel/properties/create.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_agent and not request.user.is_verified:
+            messages.warning(request, "You must pay the verification fee before listing properties.")
+            from django.shortcuts import redirect
+            return redirect('/payments/checkout/?type=verification_fee')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -622,7 +654,7 @@ class AdminPropertyCreateView(AdminRequiredMixin, TemplateView):
         return ctx
 
 
-class AdminPropertyEditView(AdminRequiredMixin, TemplateView):
+class AdminPropertyEditView(AdminOrAgentRequiredMixin, TemplateView):
     """Render the property edit form for a specific property slug."""
 
     template_name = 'admin_panel/properties/edit.html'
@@ -632,17 +664,26 @@ class AdminPropertyEditView(AdminRequiredMixin, TemplateView):
         from apps.properties.models import Property
 
         prop = get_object_or_404(Property, slug=kwargs.get('slug'))
+        if self.request.user.is_agent and prop.admin != self.request.user:
+            messages.error(self.request, 'You do not have permission to edit this property.')
+            from django.shortcuts import redirect
+            return redirect('admin_panel:property-list')
         ctx.update({'page_title': f'Edit: {prop.title}', 'property': prop})
         return ctx
 
 
-class AdminPropertyDeleteView(AdminRequiredMixin, APIView):
+class AdminPropertyDeleteView(AdminOrAgentRequiredMixin, APIView):
     """DELETE /admin-panel/properties/<slug>/delete/ – soft-deletes a property."""
 
     def post(self, request, slug, *args, **kwargs):
         from apps.properties.models import Property
 
         prop = get_object_or_404(Property, slug=slug)
+        if request.user.is_agent and prop.admin != request.user:
+            return Response(
+                {'error': 'You do not have permission to delete this property.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         title = prop.title
         prop.is_active = False
         prop.save(update_fields=['is_active'])

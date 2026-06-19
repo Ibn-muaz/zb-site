@@ -1,4 +1,4 @@
-﻿"""
+"""
 Accounts app serializers - Lands and Houses
 Handles user registration, authentication, profile, and password management.
 """
@@ -79,6 +79,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'phone',
+            'role',
         ]
         extra_kwargs = {
             'first_name': {'required': True},
@@ -102,6 +103,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 'This username is already taken.'
             )
         return value.strip()
+
+    def validate_role(self, value):
+        if value not in ['user', 'agent']:
+            raise serializers.ValidationError('You can only register as a user or an agent.')
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
