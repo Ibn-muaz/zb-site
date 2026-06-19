@@ -89,30 +89,25 @@ class RegisterView(TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
-        """Handle JSON registration requests from the frontend form."""
+        """Handle standard HTML registration requests from the frontend form."""
+        from django.shortcuts import render, redirect
+        from django.contrib import messages
+        
         serializer = UserRegisterSerializer(
-            data=request.data, context={'request': request}
+            data=request.POST, context={'request': request}
         )
         if serializer.is_valid():
             user = serializer.save()
-            tokens = _get_tokens_for_user(user)
             ip = _get_client_ip(request)
             _log_activity(user, 'register', 'New account registered', ip)
-
-            return Response(
-                {
-                    'message': (
-                        'Registration successful! '
-                        'Please check your email to verify your account.'
-                    ),
-                    'user': UserMiniSerializer(
-                        user, context={'request': request}
-                    ).data,
-                    'tokens': tokens,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            messages.success(request, 'Registration successful! Please check your email to verify your account. You can now log in.')
+            return redirect('login')
+            
+        ctx = self.get_context_data()
+        ctx['errors'] = serializer.errors
+        ctx['post_data'] = request.POST
+        return render(request, self.template_name, ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -135,8 +130,11 @@ class LoginView(TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
+        from django.shortcuts import render, redirect
+        from django.contrib import messages
+        
         serializer = UserLoginSerializer(
-            data=request.data, context={'request': request}
+            data=request.POST, context={'request': request}
         )
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -148,11 +146,10 @@ class LoginView(TemplateView):
             user.last_seen = timezone.now()
             user.save(update_fields=['last_seen'])
 
-            tokens = _get_tokens_for_user(user)
             ip = _get_client_ip(request)
             _log_activity(user, 'login', f'Login from IP {ip}', ip)
 
-            next_url = request.data.get('next')
+            next_url = request.POST.get('next') or request.GET.get('next')
             if not next_url:
                 if user.is_admin:
                     next_url = '/admin-panel/'
@@ -161,18 +158,13 @@ class LoginView(TemplateView):
                 else:
                     next_url = '/dashboard/'
 
-            return Response(
-                {
-                    'message': f'Welcome back, {user.first_name}!',
-                    'user': UserMiniSerializer(
-                        user, context={'request': request}
-                    ).data,
-                    'tokens': tokens,
-                    'redirect': next_url,
-                },
-                status=status.HTTP_200_OK,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            messages.success(request, f'Welcome back, {user.first_name}!')
+            return redirect(next_url)
+            
+        ctx = self.get_context_data()
+        ctx['errors'] = serializer.errors
+        ctx['post_data'] = request.POST
+        return render(request, self.template_name, ctx)
 
 
 # ---------------------------------------------------------------------------

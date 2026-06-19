@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Login — Lands and Houses{% endblock %}
@@ -16,6 +16,17 @@
           </div>
 
           <form method="POST" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+            {% if errors %}
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                {% for field, error_list in errors.items %}
+                  {% for error in error_list %}
+                    <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
             {% csrf_token %}
             <div class="mb-3">
               <label class="form-label">Email Address</label>
