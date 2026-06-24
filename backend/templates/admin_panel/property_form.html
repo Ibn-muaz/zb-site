@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Property — Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:1400px; padding-top:90px !important;">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-2">
+      <div class="dashboard-sidebar" style="position:sticky;top:90px;">
+        <div class="sidebar-user-info">
+          <img src="{{ user.get_avatar_url }}" alt="{{ user.full_name }}" class="sidebar-avatar" />
+          <p class="mb-0 fw-600 small">{{ user.first_name }}</p>
+          <span class="badge role-badge-{{ user.role }}">{{ user.get_role_display }}</span>
+        </div>
+        <nav class="sidebar-links">
+          <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-link"><i class="bi bi-speedometer2"></i>Dashboard</a>
+          <a href="{% url 'admin_panel:property-list' %}" class="sidebar-link active"><i class="bi bi-buildings"></i>Properties</a>
+          <a href="{% url 'admin_panel:user-list' %}" class="sidebar-link"><i class="bi bi-people"></i>Users</a>
+          <a href="{% url 'admin_panel:negotiation-list' %}" class="sidebar-link"><i class="bi bi-chat-dots"></i>Negotiations</a>
+          <a href="{% url 'admin_panel:payment-list' %}" class="sidebar-link"><i class="bi bi-wallet2"></i>Payments</a>
+          <a href="{% url 'admin_panel:content' %}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i>Content</a>
+          <a href="/admin/" class="sidebar-link"><i class="bi bi-gear"></i>Django Admin</a>
+          <a href="{% url 'home' %}" class="sidebar-link"><i class="bi bi-house"></i>View Site</a>
+          <a href="{% url 'logout' %}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'admin_panel:property-list' %}" class="btn btn-gold-outline btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <h3 class="font-heading mb-0"><i class="bi {% if action == 'Add' %}bi-plus-circle{% else %}bi-pencil{% endif %} text-gold me-2"></i>{{ action }} Property</h3>
+      </div>
+
+      <div class="glass-card p-4">
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          <h5 class="text-gold mb-3">Basic Information</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-12">
+              <label class="form-label">Title *</label>
+              <input type="text" name="title" class="form-control" value="{{ property.title|default:'' }}" required />
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Description *</label>
+              <textarea name="description" class="form-control" rows="4" required>{{ property.description|default:'' }}</textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Property Type *</label>
+              <select name="property_type" class="form-select" required>
+                <option value="house" {% if property.property_type == 'house' %}selected{% endif %}>House</option>
+                <option value="apartment" {% if property.property_type == 'apartment' %}selected{% endif %}>Apartment</option>
+                <option value="villa" {% if property.property_type == 'villa' %}selected{% endif %}>Villa</option>
+                <option value="duplex" {% if property.property_type == 'duplex' %}selected{% endif %}>Duplex</option>
+                <option value="bungalow" {% if property.property_type == 'bungalow' %}selected{% endif %}>Bungalow</option>
+                <option value="land" {% if property.property_type == 'land' %}selected{% endif %}>Land</option>
+                <option value="commercial" {% if property.property_type == 'commercial' %}selected{% endif %}>Commercial</option>
+                <option value="office" {% if property.property_type == 'office' %}selected{% endif %}>Office Space</option>
+                <option value="warehouse" {% if property.property_type == 'warehouse' %}selected{% endif %}>Warehouse</option>
+                <option value="shortlet" {% if property.property_type == 'shortlet' %}selected{% endif %}>Short Let</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Listing Type *</label>
+              <select name="listing_type" class="form-select" required>
+                <option value="sale" {% if property.listing_type == 'sale' %}selected{% endif %}>For Sale</option>
+                <option value="rent" {% if property.listing_type == 'rent' %}selected{% endif %}>For Rent</option>
+                <option value="shortlet" {% if property.listing_type == 'shortlet' %}selected{% endif %}>Short Let</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status *</label>
+              <select name="status" class="form-select" required>
+                <option value="available" {% if property.status == 'available' %}selected{% endif %}>Available</option>
+                <option value="sold" {% if property.status == 'sold' %}selected{% endif %}>Sold</option>
+                <option value="rented" {% if property.status == 'rented' %}selected{% endif %}>Rented</option>
+                <option value="pending" {% if property.status == 'pending' %}selected{% endif %}>Pending</option>
+              </select>
+            </div>
+          </div>
+
+          <h5 class="text-gold mb-3">Location</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-12">
+              <label class="form-label">Address *</label>
+              <input type="text" name="address" class="form-control" value="{{ property.address|default:'' }}" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City *</label>
+              <input type="text" name="city" class="form-control" value="{{ property.city|default:'' }}" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">State *</label>
+              <input type="text" name="state" class="form-control" value="{{ property.state|default:'' }}" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Country *</label>
+              <input type="text" name="country" class="form-control" value="{{ property.country|default:'Nigeria' }}" required />
+            </div>
+          </div>
+
+          <h5 class="text-gold mb-3">Pricing & Details</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Price (₦) *</label>
+              <input type="number" step="0.01" name="price" class="form-control" value="{{ property.price|default:'' }}" required />
+            </div>
+            <div class="col-md-6 d-flex align-items-center mt-md-5">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="price_negotiable" id="price_negotiable" {% if property.price_negotiable or action == 'Add' %}checked{% endif %}>
+                <label class="form-check-label" for="price_negotiable">Price Negotiable</label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Bedrooms</label>
+              <input type="number" name="bedrooms" class="form-control" value="{{ property.bedrooms|default:0 }}" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Bathrooms</label>
+              <input type="number" name="bathrooms" class="form-control" value="{{ property.bathrooms|default:0 }}" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Parking Spaces</label>
+              <input type="number" name="parking_spaces" class="form-control" value="{{ property.parking_spaces|default:0 }}" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Area (sqft)</label>
+              <input type="number" step="0.01" name="area_sqft" class="form-control" value="{{ property.area_sqft|default:'' }}" min="0" />
+            </div>
+          </div>
+
+          <h5 class="text-gold mb-3">Media & Amenities</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-12">
+              <label class="form-label">Video URL (YouTube)</label>
+              <input type="url" name="video_url" class="form-control" value="{{ property.video_url|default:'' }}" />
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Property Images (Select multiple)</label>
+              <input type="file" name="images" class="form-control" multiple accept="image/*" {% if action == 'Add' %}required{% endif %} />
+              {% if property.images.all %}
+                <p class="small text-muted mt-2">Currently uploaded images: {{ property.images.count }}</p>
+              {% endif %}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Amenities</label>
+              <div class="row">
+                {% for amenity in amenities %}
+                <div class="col-md-3 col-sm-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="amenities" value="{{ amenity.id }}" id="amenity_{{ amenity.id }}" 
+                      {% if property and amenity in property.amenities.all %}checked{% endif %}>
+                    <label class="form-check-label" for="amenity_{{ amenity.id }}">{{ amenity.name }}</label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <h5 class="text-gold mb-3">Settings</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_featured" id="is_featured" {% if property.is_featured %}checked{% endif %}>
+                <label class="form-check-label" for="is_featured">Featured Property</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if property.is_active or action == 'Add' %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">Active (Visible on site)</label>
+              </div>
+            </div>
+          </div>
+
+          <hr class="border-secondary my-4">
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'admin_panel:property-list' %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-gold">{{ action }} Property</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

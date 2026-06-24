@@ -6,10 +6,6 @@ All views require admin or super_admin role.
 from django.urls import path
 from .views import (
     AdminDashboardView,
-    AdminPropertyListView,
-    AdminPropertyCreateView,
-    AdminPropertyEditView,
-    AdminPropertyDeleteView,
     AdminUserListView,
     AdminSuspendUserView,
     AdminNegotiationListView,
@@ -17,6 +13,12 @@ from .views import (
     AdminContentView,
     AdminPaymentListView,
     AdminAnalyticsView,
+)
+from apps.properties.views import (
+    AdminPropertyListView,
+    AdminPropertyCreateView,
+    AdminPropertyEditView,
+    AdminPropertyDeleteView,
 )
 
 

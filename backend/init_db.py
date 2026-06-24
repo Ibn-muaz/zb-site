@@ -28,28 +28,5 @@ def run():
         admin = User.objects.get(email='admin@ZBLandsAndHome.com')
         print("✅ Superuser already exists.")
 
-    # 2. Create a Dummy Property
-    if not Property.objects.exists():
-        Property.objects.create(
-            title="Luxury 5-Bedroom Detached Duplex in Ikoyi",
-            description="Exquisitely finished 5-bedroom fully detached duplex with a swimming pool, smart home automation, and a BQ in the prestigious heart of Ikoyi, Lagos. Ideal for high net-worth individuals seeking premium comfort and security.",
-            property_type='duplex',
-            listing_type='sale',
-            status='available',
-            price=450000000.00,
-            address="12 Bourdillon Road",
-            city="Ikoyi",
-            state="Lagos",
-            country="Nigeria",
-            bedrooms=5,
-            bathrooms=6,
-            parking_spaces=4,
-            area_sqft=4500,
-            is_featured=True,
-            price_negotiable=True,
-            admin=admin
-        )
-        print("✅ Dummy property created.")
-
 if __name__ == '__main__':
     run()

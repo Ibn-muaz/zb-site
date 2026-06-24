@@ -487,8 +487,8 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
                 user=user,
                 status__in=['pending', 'counter_offered'],
             )
-            .select_related('property')
-            .prefetch_related('property__images')
+            .select_related('listing')
+            .prefetch_related('listing__images')
             .order_by('-updated_at')[:5]
         )
 
