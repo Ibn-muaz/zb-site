@@ -11,6 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+# Also read Neon Auth and DB vars from root .env.local if it exists
+neon_env_path = os.path.join(BASE_DIR.parent, '.env.local')
+if os.path.exists(neon_env_path):
+    environ.Env.read_env(neon_env_path)
+
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-zb-change-me')
 DEBUG = env('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0', 'zb-site.onrender.com', '.onrender.com', '*'])
@@ -39,6 +44,8 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.content',
     'apps.payments',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -93,6 +100,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.authentication.NeonDjangoBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # --- Internationalization ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
@@ -107,12 +119,20 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': env('CLOUDINARY_CLOUD_NAME', default='eyl4qjsy'),
+    'API_KEY': env('CLOUDINARY_API_KEY', default='872871451246464'),
+    'API_SECRET': env('CLOUDINARY_API_SECRET', default='t2iHSv-oMGHPQf82JFTQVt5BJsE'),
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- REST Framework ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.accounts.authentication.NeonJWTAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
@@ -148,6 +168,10 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+
+# --- Neon Auth ---
+NEON_AUTH_JWKS_URL = env('NEON_AUTH_JWKS_URL', default='')
+NEON_AUTH_BASE_URL = env('NEON_AUTH_BASE_URL', default='')
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [

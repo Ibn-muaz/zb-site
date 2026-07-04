@@ -146,7 +146,6 @@ class PropertyImage(models.Model):
 
 class PropertyVideo(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='videos')
-    video = models.FileField(upload_to='properties/videos/', blank=True, null=True)
     video_url = models.URLField(blank=True)
     title = models.CharField(max_length=200, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)

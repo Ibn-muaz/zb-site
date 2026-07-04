@@ -167,6 +167,44 @@ class LoginView(TemplateView):
         return render(request, self.template_name, ctx)
 
 
+class NeonLoginView(APIView):
+    """
+    POST /accounts/neon-login/
+    Expects a JSON body with {'token': '<neon-auth-token>'}.
+    Authenticates the user using Neon Auth token and creates a Django session.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from django.contrib.auth import authenticate, login
+        user = authenticate(request, token=token)
+        
+        if user is not None:
+            login(request, user)
+            ip = _get_client_ip(request)
+            _log_activity(user, 'login', 'Logged in via Neon Auth', ip)
+            
+            # Generate local JWT tokens if needed by DRF
+            tokens = _get_tokens_for_user(user)
+            
+            next_url = request.GET.get('next', '')
+            if not next_url:
+                next_url = '/admin/' if user.is_staff else '/dashboard/'
+                
+            return Response({
+                'message': 'Successfully logged in.',
+                'tokens': tokens,
+                'redirect_url': next_url
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid token or user mapping failed'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+
 # ---------------------------------------------------------------------------
 # LogoutView
 # ---------------------------------------------------------------------------

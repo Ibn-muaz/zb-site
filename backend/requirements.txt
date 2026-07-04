@@ -23,3 +23,6 @@ pyyaml==6.0.3
 uritemplate==4.2.0
 requests==2.34.2
 psycopg2-binary==2.9.9
+django-cloudinary-storage
+cloudinary
+cryptography

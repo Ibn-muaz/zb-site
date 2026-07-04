@@ -1,4 +1,4 @@
-﻿"""
+"""
 Accounts app URL patterns - Lands and Houses
 Web-facing authentication and profile URLs.
 """
@@ -6,6 +6,7 @@ from django.urls import path
 from .views import (
     RegisterView,
     LoginView,
+    NeonLoginView,
     LogoutView,
     EmailVerifyView,
     PasswordResetRequestView,
@@ -28,6 +29,9 @@ urlpatterns = [
     # GET  → render login page
     # POST → authenticate (JSON), returns JWT tokens + sets session
     path('login/', LoginView.as_view(), name='login'),
+
+    # POST → authenticate via Neon Auth token
+    path('neon-login/', NeonLoginView.as_view(), name='neon-login'),
 
     # POST → blacklist JWT refresh token, clear session
     path('logout/', LogoutView.as_view(), name='logout'),
