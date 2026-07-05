@@ -82,13 +82,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'zb_lands_home.wsgi.application'
 
-# --- Database: SQLite (switch to PostgreSQL later) ---
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# --- Database: Neon PostgreSQL in production, SQLite locally ---
+DATABASE_URL = env('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # --- Auth ---
 AUTH_USER_MODEL = 'accounts.CustomUser'

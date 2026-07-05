@@ -26,3 +26,4 @@ psycopg2-binary==2.9.9
 django-cloudinary-storage
 cloudinary
 cryptography
+dj-database-url==2.3.0
