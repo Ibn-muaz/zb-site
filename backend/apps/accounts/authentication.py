@@ -27,7 +27,7 @@ def decode_neon_token(token):
             options={"verify_aud": False}
         )
         return data
-    except jwt.PyJWTError as e:
+    except Exception as e:
         logger.error(f"JWT decode error: {e}")
         return None
 
@@ -47,19 +47,11 @@ def get_or_create_user_from_token(payload):
             defaults={
                 'username': email.split('@')[0] + '_' + user_id[:5],
                 'is_active': True,
-                # Give them admin privileges for testing if they log in via Neon Auth,
-                # or handle roles appropriately in production.
-                'role': 'super_admin',
-                'is_staff': True,
-                'is_superuser': True,
+                'role': 'user',
+                'is_staff': False,
+                'is_superuser': False,
             }
         )
-        # If user already exists but isn't staff (for admin access), update them for this demo
-        if not created and not user.is_staff:
-            user.is_staff = True
-            user.is_superuser = True
-            user.role = 'super_admin'
-            user.save()
             
         return user
     except Exception as e:
