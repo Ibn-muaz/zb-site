@@ -39,12 +39,30 @@
     <h2>Admin Login</h2>
     <p>Please log in using your Neon Auth account.</p>
     
+    <div style="text-align: left; margin-bottom: 20px;">
+      <form action="{{ app_path }}" method="post" id="login-form">
+        {% csrf_token %}
+        <div class="form-row">
+          {{ form.username.errors }}
+          <label for="id_username" class="required">Email:</label>
+          {{ form.username }}
+        </div>
+        <div class="form-row">
+          {{ form.password.errors }}
+          <label for="id_password" class="required">Password:</label>
+          {{ form.password }}
+        </div>
+        <div class="submit-row">
+          <input type="submit" value="Log in">
+        </div>
+      </form>
+    </div>
+
     <!-- This is where the Neon Auth Widget will go -->
     <div id="neon-auth-container">
-      <p style="font-size: 0.9em; color: #666;"><em>(Neon Auth Widget or Redirect flow here)</em></p>
+      <p style="font-size: 0.9em; color: #666;"><em>Or log in with Neon JWT (for frontend integration testing)</em></p>
       
-      <!-- For testing/demonstration purposes, we can manually submit a token -->
-      <form id="neon-manual-login" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+      <form id="neon-manual-login" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 20px;">
         <input type="text" id="neon-token-input" placeholder="Paste Neon JWT Token here" style="width: 100%; padding: 8px; margin-bottom: 10px;">
         <button type="submit" class="neon-btn">Verify Token & Log In</button>
       </form>
