@@ -17,7 +17,7 @@ def negotiation_status_notify(sender, instance, created, **kwargs):
                 user=admin,
                 notification_type='new_offer',
                 title='New Offer Received',
-                message=f'{instance.user.full_name} made an offer of ₦{instance.initial_offer:,.0f} on "{instance.listing.title}"',
+                message=f'{instance.user.full_name} made an offer of ₦{float(instance.initial_offer):,.0f} on "{instance.listing.title}"',
                 link=f'/admin-panel/negotiations/{instance.pk}/',
             )
     else:
@@ -25,7 +25,7 @@ def negotiation_status_notify(sender, instance, created, **kwargs):
         status_messages = {
             'accepted': ('offer_accepted', 'Offer Accepted! 🎉', f'Your offer on "{instance.listing.title}" has been accepted.'),
             'rejected': ('offer_rejected', 'Offer Rejected', f'Your offer on "{instance.listing.title}" was not accepted.'),
-            'counter_offered': ('counter_offer', 'Counter Offer Received', f'Admin has made a counter offer of ₦{instance.counter_offer:,.0f} on "{instance.listing.title}"'),
+            'counter_offered': ('counter_offer', 'Counter Offer Received', f'Admin has made a counter offer of ₦{float(instance.counter_offer) if instance.counter_offer else 0:,.0f} on "{instance.listing.title}"'),
         }
         if instance.status in status_messages:
             ntype, title, msg = status_messages[instance.status]

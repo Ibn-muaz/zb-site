@@ -21,12 +21,16 @@ schema_view = get_schema_view(
 )
 
 from django.http import HttpResponse
+from apps.accounts.views import LogoutView
 
 def health_check(request):
     return HttpResponse("OK")
 
 urlpatterns = [
     path('health/', health_check, name='health_check'),
+    
+    # Override Django admin logout to accept GET requests and prevent 405 errors in Django 5+
+    path('admin/logout/', LogoutView.as_view(), name='admin_logout'),
     path('admin/', admin.site.urls),
 
     # Web pages

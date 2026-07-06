@@ -29,9 +29,9 @@ class NegotiationListView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
         if user.is_admin:
-            negotiations = Negotiation.objects.select_related('user', 'property').order_by('-created_at')
+            negotiations = Negotiation.objects.select_related('user', 'listing').order_by('-created_at')
         else:
-            negotiations = Negotiation.objects.filter(user=user).select_related('property').order_by('-created_at')
+            negotiations = Negotiation.objects.filter(user=user).select_related('listing').order_by('-created_at')
         ctx['negotiations'] = negotiations
         return ctx
 
@@ -216,7 +216,7 @@ class NegotiationListAPIView(generics.ListAPIView):
         s = self.request.query_params.get('status', '')
         if s:
             qs = qs.filter(status=s)
-        return qs.select_related('user', 'property').order_by('-created_at')
+        return qs.select_related('user', 'listing').order_by('-created_at')
 
 
 class NegotiationDetailAPIView(generics.RetrieveAPIView):

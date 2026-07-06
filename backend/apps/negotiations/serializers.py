@@ -70,7 +70,7 @@ class CreateNegotiationSerializer(serializers.Serializer):
         from apps.properties.models import Property
         prop = Property.objects.get(slug=attrs['property_slug'])
         if Negotiation.objects.filter(
-            user=request.user, property=prop, status__in=['pending', 'counter_offered']
+            user=request.user, listing=prop, status__in=['pending', 'counter_offered']
         ).exists():
             raise serializers.ValidationError('You already have an active negotiation for this property.')
         if attrs['offer_amount'] <= 0:

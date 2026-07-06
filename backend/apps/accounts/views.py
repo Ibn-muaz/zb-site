@@ -231,7 +231,14 @@ class LogoutView(View):
             _log_activity(request.user, 'logout', f'Logout from IP {ip}', ip)
             messages.success(request, 'You have been successfully logged out.')
 
-        # Clear Django session
+        if request.path.startswith('/api/'):
+            from rest_framework.response import Response
+            from rest_framework import status
+            # For DRF API requests, return JSON
+            auth_logout(request)
+            return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+
+        # Clear Django session for HTML clients
         auth_logout(request)
 
         return redirect('home')
