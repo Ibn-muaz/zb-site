@@ -58,7 +58,7 @@ class PropertyDetailView(View):
             is_saved = SavedProperty.objects.filter(user=request.user, property=prop).exists()
             from apps.negotiations.models import Negotiation
             existing_negotiation = Negotiation.objects.filter(
-                user=request.user, property=prop, status__in=['pending', 'counter_offered']
+                user=request.user, listing=prop, status__in=['pending', 'counter_offered']
             ).first()
 
         related = Property.objects.filter(
