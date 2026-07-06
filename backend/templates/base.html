@@ -116,7 +116,7 @@
                 <li><a class="dropdown-item" href="{% url 'admin_panel:dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Admin Panel</a></li>
                 <li><hr class="dropdown-divider"></li>
               {% elif user.is_agent %}
-                <li><a class="dropdown-item" href="{% url 'admin-properties' %}"><i class="bi bi-building me-2"></i>Agent Panel</a></li>
+                <li><a class="dropdown-item" href="{% url 'admin_panel:property-list' %}"><i class="bi bi-building me-2"></i>Agent Panel</a></li>
                 <li><hr class="dropdown-divider"></li>
               {% endif %}
               <li><a class="dropdown-item" href="{% url 'dashboard:home' %}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>

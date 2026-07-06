@@ -292,7 +292,7 @@ class EmailVerifyView(APIView):
                 request,
                 'Your email has been verified! You can now log in.',
             )
-            return redirect('accounts:login')
+            return redirect('login')
 
         return Response(
             {

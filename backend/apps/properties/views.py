@@ -175,7 +175,7 @@ class AdminPropertyCreateView(View):
                 prop.video_url = prop.video_url.replace('watch?v=', 'embed/')
                 prop.save()
             messages.success(request, f'Property "{prop.title}" created successfully.')
-            return redirect('admin-properties')
+            return redirect('admin_panel:property-list')
         except Exception as e:
             messages.error(request, f'Error creating property: {e}')
         return render(request, self.template_name, {'amenities': Amenity.objects.all(), 'action': 'Add'})
@@ -194,7 +194,7 @@ class AdminPropertyEditView(View):
         prop = get_object_or_404(Property, slug=slug)
         if request.user.is_agent and prop.admin != request.user:
             messages.error(request, 'You do not have permission to edit this property.')
-            return redirect('admin-properties')
+            return redirect('admin_panel:property-list')
         return render(request, self.template_name, {
             'property': prop, 'amenities': Amenity.objects.all(), 'action': 'Edit'
         })
@@ -203,7 +203,7 @@ class AdminPropertyEditView(View):
         prop = get_object_or_404(Property, slug=slug)
         if request.user.is_agent and prop.admin != request.user:
             messages.error(request, 'You do not have permission to edit this property.')
-            return redirect('admin-properties')
+            return redirect('admin_panel:property-list')
         data = request.POST.dict()
         amenity_ids = request.POST.getlist('amenities')
         data.pop('csrfmiddlewaretoken', None)
@@ -225,7 +225,7 @@ class AdminPropertyEditView(View):
                 prop.save()
                 
             messages.success(request, f'Property "{prop.title}" updated.')
-            return redirect('admin-properties')
+            return redirect('admin_panel:property-list')
         except Exception as e:
             messages.error(request, f'Error: {e}')
         return render(request, self.template_name, {
@@ -244,11 +244,11 @@ class AdminPropertyDeleteView(View):
         prop = get_object_or_404(Property, slug=slug)
         if request.user.is_agent and prop.admin != request.user:
             messages.error(request, 'You do not have permission to delete this property.')
-            return redirect('admin-properties')
+            return redirect('admin_panel:property-list')
         title = prop.title
         prop.delete()
         messages.success(request, f'Property "{title}" deleted.')
-        return redirect('admin-properties')
+        return redirect('admin_panel:property-list')
 
 
 # ──────────────────────── REST API VIEWS ────────────────────────

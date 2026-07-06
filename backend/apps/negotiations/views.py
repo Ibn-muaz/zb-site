@@ -44,7 +44,7 @@ class NegotiationDetailView(View):
         neg = get_object_or_404(Negotiation, pk=pk)
         if not request.user.is_admin and neg.user != request.user:
             messages.error(request, 'Access denied.')
-            return redirect('my-negotiations')
+            return redirect('dashboard:my-negotiations')
         # Mark messages as read
         NegotiationMessage.objects.filter(
             negotiation=neg, is_read=False
@@ -198,7 +198,7 @@ class AdminNegotiationDetailView(View):
                 is_admin_reply=True
             )
         messages.success(request, f'Negotiation {action}ed.')
-        return redirect('admin-negotiation-detail', pk=pk)
+        return redirect('admin_panel:negotiation-detail', negotiation_id=pk)
 
 
 # ──────────────────────── REST API VIEWS ────────────────────────
