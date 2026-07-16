@@ -61,10 +61,10 @@ class PropertyDetailView(View):
                 user=request.user, listing=prop, status__in=['pending', 'counter_offered']
             ).first()
 
-        related = Property.objects.filter(
+        related = list(Property.objects.filter(
             is_active=True, city=prop.city
-        ).exclude(pk=prop.pk).prefetch_related('images')[:4]
-        if related.count() < 4:
+        ).exclude(pk=prop.pk).prefetch_related('images')[:4])
+        if len(related) < 4:
             related = Property.objects.filter(
                 is_active=True, property_type=prop.property_type
             ).exclude(pk=prop.pk).prefetch_related('images')[:4]

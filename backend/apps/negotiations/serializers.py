@@ -44,10 +44,10 @@ class NegotiationListSerializer(serializers.ModelSerializer):
 
 class NegotiationDetailSerializer(NegotiationListSerializer):
     messages = NegotiationMessageSerializer(many=True, read_only=True)
-    admin = UserMiniSerializer(read_only=True)
+    handled_by = UserMiniSerializer(read_only=True)
 
     class Meta(NegotiationListSerializer.Meta):
-        fields = NegotiationListSerializer.Meta.fields + ['messages', 'admin', 'notes', 'updated_at', 'resolved_at']
+        fields = NegotiationListSerializer.Meta.fields + ['messages', 'handled_by', 'notes', 'updated_at', 'resolved_at']
 
 
 class CreateNegotiationSerializer(serializers.Serializer):

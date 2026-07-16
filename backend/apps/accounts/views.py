@@ -223,7 +223,8 @@ class LogoutView(View):
     def _logout(self, request):
         from django.contrib import messages
         from django.shortcuts import redirect
-        
+        from django.http import JsonResponse as _JsonResponse
+
         ip = _get_client_ip(request)
 
         # Log activity before clearing session
@@ -232,11 +233,9 @@ class LogoutView(View):
             messages.success(request, 'You have been successfully logged out.')
 
         if request.path.startswith('/api/'):
-            from rest_framework.response import Response
-            from rest_framework import status
-            # For DRF API requests, return JSON
+            # For API requests, return JSON without DRF Response (LogoutView is not an APIView)
             auth_logout(request)
-            return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+            return _JsonResponse({'message': 'Successfully logged out'}, status=200)
 
         # Clear Django session for HTML clients
         auth_logout(request)
@@ -287,7 +286,8 @@ class EmailVerifyView(APIView):
         _log_activity(user, 'register', 'Email verified', ip)
 
         # For web requests, redirect to login with a success message
-        if 'text/html' in request.accepted_media_type:
+        accept_header = request.META.get('HTTP_ACCEPT', '')
+        if 'text/html' in accept_header:
             messages.success(
                 request,
                 'Your email has been verified! You can now log in.',

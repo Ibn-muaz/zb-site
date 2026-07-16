@@ -24,7 +24,9 @@ class NotificationListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        notifications = Notification.objects.filter(user=request.user)[:20]
+        base_qs = Notification.objects.filter(user=request.user)
+        unread_count = base_qs.filter(is_read=False).count()
+        notifications = base_qs[:20]
         data = [{
             'id': str(n.id),
             'type': n.notification_type,
@@ -34,7 +36,7 @@ class NotificationListAPIView(APIView):
             'link': n.link,
             'created_at': n.created_at.isoformat(),
         } for n in notifications]
-        return Response({'notifications': data, 'unread_count': notifications.filter(is_read=False).count()})
+        return Response({'notifications': data, 'unread_count': unread_count})
 
 
 class MarkNotificationReadAPIView(APIView):

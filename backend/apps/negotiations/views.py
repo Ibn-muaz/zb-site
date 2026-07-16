@@ -237,7 +237,7 @@ class CreateNegotiationAPIView(APIView):
     def post(self, request):
         serializer = CreateNegotiationSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            prop = Property.objects.get(slug=serializer.validated_data['property_slug'])
+            prop = get_object_or_404(Property, slug=serializer.validated_data['property_slug'], is_active=True)
             neg = Negotiation.objects.create(
                 listing=prop,
                 user=request.user,
