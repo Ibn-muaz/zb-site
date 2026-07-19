@@ -2,7 +2,7 @@
 <div class="property-card h-100">
   <div class="property-card-img">
     {% if property.main_image %}
-      <img src="{{ property.main_image.image.url }}" alt="{{ property.title }}" loading="lazy" />
+      <img src="{{ property.main_image.image.url }}" alt="{{ property.title }}" loading="lazy" style="width:100%; height:100%; max-height:220px; object-fit:cover;" />
     {% else %}
       <div class="no-image"><i class="bi bi-buildings"></i></div>
     {% endif %}
