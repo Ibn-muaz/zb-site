@@ -34,7 +34,12 @@
     <div class="col-lg-10">
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <h3 class="font-heading mb-0"><i class="bi bi-people text-gold me-2"></i>Manage Users</h3>
-        <span class="section-badge">{{ users|length }} users</span>
+        <div class="d-flex gap-3 align-items-center">
+          <span class="section-badge">{{ users|length }} users</span>
+          {% if user.is_super_admin %}
+          <a href="{% url 'admin_panel:user-create' %}" class="btn btn-gold"><i class="bi bi-plus-circle me-2"></i>Add User</a>
+          {% endif %}
+        </div>
       </div>
 
       <!-- Filters -->
@@ -119,11 +124,17 @@
               </td>
               <td class="text-muted small">{{ u.date_joined|date:"M d, Y" }}</td>
               <td class="text-center">
-                <button class="btn btn-sm suspend-btn {% if u.is_suspended %}btn-success{% else %}btn-warning{% endif %}"
-                        data-user-id="{{ u.id }}"
-                        title="{% if u.is_suspended %}Activate User{% else %}Suspend User{% endif %}">
-                  {% if u.is_suspended %}<i class="bi bi-check2"></i>{% else %}<i class="bi bi-slash-circle"></i>{% endif %}
-                </button>
+                <div class="d-flex gap-1 justify-content-center">
+                  <button class="btn btn-sm suspend-btn {% if u.is_suspended %}btn-success{% else %}btn-warning{% endif %}"
+                          data-user-id="{{ u.id }}"
+                          title="{% if u.is_suspended %}Activate User{% else %}Suspend User{% endif %}">
+                    {% if u.is_suspended %}<i class="bi bi-check2"></i>{% else %}<i class="bi bi-slash-circle"></i>{% endif %}
+                  </button>
+                  {% if user.is_super_admin %}
+                  <a href="{% url 'admin_panel:user-edit' u.id %}" class="btn btn-gold btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
+                  <button class="btn btn-danger btn-sm delete-btn" data-user-id="{{ u.id }}" title="Delete User"><i class="bi bi-trash"></i></button>
+                  {% endif %}
+                </div>
               </td>
             </tr>
             {% endfor %}
@@ -159,8 +170,23 @@
         method: 'POST',
         headers: { 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '', 'Content-Type': 'application/json' }
       }).then(r => r.json()).then(data => {
-        if (data.success) location.reload();
-        else alert(data.message || 'Error updating user status');
+        if (data.message) location.reload();
+        else alert(data.error || 'Error updating user status');
+      }).catch(() => alert('Network error. Please try again.'));
+    });
+  });
+
+  // Delete user toggle
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const userId = this.dataset.userId;
+      if (!confirm('WARNING: Are you sure you want to completely delete this user? This action cannot be undone!')) return;
+      fetch(`/admin-panel/users/${userId}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '', 'Content-Type': 'application/json' }
+      }).then(r => r.json()).then(data => {
+        if (data.message) location.reload();
+        else alert(data.error || 'Error deleting user');
       }).catch(() => alert('Network error. Please try again.'));
     });
   });

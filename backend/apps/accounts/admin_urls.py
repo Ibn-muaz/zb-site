@@ -7,6 +7,9 @@ from django.urls import path
 from .views import (
     AdminDashboardView,
     AdminUserListView,
+    AdminUserCreateView,
+    AdminUserEditView,
+    AdminUserDeleteView,
     AdminSuspendUserView,
     AdminNegotiationListView,
     AdminNegotiationDetailView,
@@ -65,6 +68,15 @@ urlpatterns = [
 
     # GET → paginated / searchable user list with role filter
     path('users/', AdminUserListView.as_view(), name='user-list'),
+
+    # GET / POST → Add new user/agent (Super Admin only)
+    path('users/add/', AdminUserCreateView.as_view(), name='user-create'),
+
+    # GET / POST → Edit user/agent (Super Admin only)
+    path('users/<uuid:user_id>/edit/', AdminUserEditView.as_view(), name='user-edit'),
+
+    # POST → Delete user/agent (Super Admin only)
+    path('users/<uuid:user_id>/delete/', AdminUserDeleteView.as_view(), name='user-delete'),
 
     # POST → toggle is_suspended flag for user <id>
     path(

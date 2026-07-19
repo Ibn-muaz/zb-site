@@ -575,6 +575,19 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
 # Admin Panel Views  (role-restricted; NOT Django's built-in admin)
 # ---------------------------------------------------------------------------
 
+class SuperAdminRequiredMixin(LoginRequiredMixin):
+    """Mixin that restricts access to super_admin role users only."""
+    login_url = '/accounts/login/'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_super_admin:
+            messages.error(request, 'You must be a Super Admin to access this area.')
+            return redirect('/admin-panel/')
+        return super().dispatch(request, *args, **kwargs)
+
+
 class AdminRequiredMixin(LoginRequiredMixin):
     """Mixin that restricts access to admin or super_admin role users."""
 
@@ -650,96 +663,7 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
         return ctx
 
 
-class AdminPropertyListView(AdminOrAgentRequiredMixin, TemplateView):
-    """Paginated list of all properties for admin management."""
 
-    template_name = 'admin_panel/properties/list.html'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from apps.properties.models import Property
-
-        properties = Property.objects.select_related('admin').prefetch_related(
-            'images'
-        ).order_by('-created_at')
-
-        if self.request.user.is_agent:
-            properties = properties.filter(admin=self.request.user)
-
-        # Simple search
-        query = self.request.GET.get('q', '')
-        if query:
-            properties = properties.filter(
-                Q(title__icontains=query)
-                | Q(city__icontains=query)
-                | Q(state__icontains=query)
-            )
-
-        ctx.update(
-            {
-                'page_title': 'Manage Properties',
-                'properties': properties,
-                'search_query': query,
-            }
-        )
-        return ctx
-
-
-class AdminPropertyCreateView(AdminOrAgentRequiredMixin, TemplateView):
-    """Render the property creation form."""
-
-    template_name = 'admin_panel/properties/create.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_agent and not request.user.is_verified:
-            messages.warning(request, "You must pay the verification fee before listing properties.")
-            from django.shortcuts import redirect
-            return redirect('/payments/checkout/?type=verification_fee')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['page_title'] = 'Add New Property'
-        return ctx
-
-
-class AdminPropertyEditView(AdminOrAgentRequiredMixin, TemplateView):
-    """Render the property edit form for a specific property slug."""
-
-    template_name = 'admin_panel/properties/edit.html'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from apps.properties.models import Property
-
-        prop = get_object_or_404(Property, slug=kwargs.get('slug'))
-        if self.request.user.is_agent and prop.admin != self.request.user:
-            messages.error(self.request, 'You do not have permission to edit this property.')
-            from django.shortcuts import redirect
-            return redirect('admin_panel:property-list')
-        ctx.update({'page_title': f'Edit: {prop.title}', 'property': prop})
-        return ctx
-
-
-class AdminPropertyDeleteView(AdminOrAgentRequiredMixin, APIView):
-    """DELETE /admin-panel/properties/<slug>/delete/ – soft-deletes a property."""
-
-    def post(self, request, slug, *args, **kwargs):
-        from apps.properties.models import Property
-
-        prop = get_object_or_404(Property, slug=slug)
-        if request.user.is_agent and prop.admin != request.user:
-            return Response(
-                {'error': 'You do not have permission to delete this property.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        title = prop.title
-        prop.is_active = False
-        prop.save(update_fields=['is_active'])
-        return Response(
-            {'message': f'Property "{title}" has been deactivated.'},
-            status=status.HTTP_200_OK,
-        )
 
 
 class AdminUserListView(AdminRequiredMixin, TemplateView):
@@ -795,6 +719,106 @@ class AdminSuspendUserView(AdminRequiredMixin, APIView):
             {'message': f'User {user.email} has been {action}.', 'is_suspended': user.is_suspended},
             status=status.HTTP_200_OK,
         )
+
+
+class AdminUserCreateView(SuperAdminRequiredMixin, TemplateView):
+    """View for super admins to create new users/agents."""
+    template_name = 'admin_panel/users/form.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = 'Add New User/Agent'
+        ctx['action'] = 'Add'
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        data = request.POST.dict()
+        email = data.get('email')
+        password = data.get('password')
+        role = data.get('role', 'user')
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+        phone = data.get('phone', '')
+
+        if not email or not password:
+            messages.error(request, 'Email and password are required.')
+            return redirect('admin_panel:user-create')
+
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'A user with this email already exists.')
+            return redirect('admin_panel:user-create')
+
+        try:
+            user = CustomUser.objects.create_user(
+                email=email,
+                username=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role=role,
+                phone=phone,
+                is_verified=True
+            )
+            messages.success(request, f'User {user.email} created successfully as {user.get_role_display()}.')
+            return redirect('admin_panel:user-list')
+        except Exception as e:
+            messages.error(request, f'Error creating user: {e}')
+            return redirect('admin_panel:user-create')
+
+
+class AdminUserEditView(SuperAdminRequiredMixin, TemplateView):
+    """View for super admins to edit existing users."""
+    template_name = 'admin_panel/users/form.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('user_id')
+        user_obj = get_object_or_404(CustomUser, id=user_id)
+        ctx['page_title'] = f'Edit User: {user_obj.email}'
+        ctx['action'] = 'Edit'
+        ctx['edit_user'] = user_obj
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        user_id = self.kwargs.get('user_id')
+        user_obj = get_object_or_404(CustomUser, id=user_id)
+
+        data = request.POST.dict()
+        user_obj.first_name = data.get('first_name', user_obj.first_name)
+        user_obj.last_name = data.get('last_name', user_obj.last_name)
+        user_obj.phone = data.get('phone', user_obj.phone)
+        
+        new_role = data.get('role')
+        if new_role:
+            user_obj.role = new_role
+            
+        password = data.get('password')
+        if password:
+            user_obj.set_password(password)
+
+        try:
+            user_obj.save()
+            messages.success(request, f'User {user_obj.email} updated successfully.')
+            return redirect('admin_panel:user-list')
+        except Exception as e:
+            messages.error(request, f'Error updating user: {e}')
+            return redirect('admin_panel:user-edit', user_id=user_id)
+
+
+class AdminUserDeleteView(SuperAdminRequiredMixin, APIView):
+    """DELETE /admin-panel/users/<user_id>/delete/ – completely removes a user."""
+    
+    def post(self, request, user_id, *args, **kwargs):
+        user_obj = get_object_or_404(CustomUser, id=user_id)
+        if user_obj.is_super_admin:
+            return Response({'error': 'Cannot delete a super admin.'}, status=status.HTTP_403_FORBIDDEN)
+        email = user_obj.email
+        user_obj.delete()
+        return Response({'message': f'User {email} has been deleted.'}, status=status.HTTP_200_OK)
 
 
 class AdminNegotiationListView(AdminRequiredMixin, TemplateView):
